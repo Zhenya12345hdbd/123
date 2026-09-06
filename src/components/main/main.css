@@ -1,0 +1,112 @@
+@font-face {
+  font-family: 'Lato-Regular';
+  src: url('/src/fonts/lato-regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+}
+
+
+
+.main{
+    width: 1180px;
+    margin: auto;
+   
+    display: flex;
+    height: 800px;
+    
+    
+}
+.main_small{
+    width: 260px;
+   background: #595757;
+background: linear-gradient(180deg, rgba(89, 87, 87, 1) 0%, rgba(0, 0, 0, 1) 100%);
+padding: 20px;
+    
+}
+
+.tochka{
+    width: 8px;
+    border-radius: 50%;
+    height: 8px;
+    background-color: #70CC16;
+}
+.main_small_tags{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-around;
+
+    
+    width: 100%;
+}
+.main_small_tags img{
+    width: 16px;
+    height: 16px;
+    margin-top: 3px;
+    cursor: pointer;
+}
+.main_small h1{
+    font-family: 'Lato-Regular';
+font-weight: 700;
+font-size: 20px;
+line-height: 100%;
+color: white; 
+cursor: pointer;
+
+}
+.tag_list{
+    margin-left: 15px;
+    transform: rotate(90);
+    font-weight: 400;
+}
+
+.friends{
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    justify-content: space-between;
+}
+.friends_num{
+    margin-top: 150px;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+.friends h1{
+    color: #919191;
+font-weight: 700;
+font-size: 12px;
+line-height: 100%;
+letter-spacing: 0px;
+text-transform: uppercase;
+}
+
+.list{
+    display: flex;
+    flex-direction: column;
+    margin-top: 20px;
+    gap: 10px;
+}
+.user_page{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+
+}
+.user_page p{
+    color: #B5B5B5;
+font-weight: 400;
+font-size: 14px;
+line-height: 100%;
+letter-spacing: 0px;
+cursor: pointer;
+
+
+}
+.photo_user{
+    width: 34px;
+    height: 34px;
+    object-fit: cover;
+    border-radius: 4px;
+}
