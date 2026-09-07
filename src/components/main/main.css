@@ -233,11 +233,32 @@ letter-spacing: 0px;
     padding-left: 20px;
     padding-right: 20px;
     height: 100%;
-     overflow: scroll;
-     overflow-x: hidden;
-    
+     overflow-y: hidden;
+     overflow-y: hidden;
+  transition: box-shadow 0.3s ease, border-color 0.3s ease;
+      
+     
+}
+/* Опционально: стилизовать скроллбар */
+
+
+.message_area:hover {
+  overflow-y: auto;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-color: #ccc;
 }
 
+/* Скроллбар */
+.message_area::-webkit-scrollbar {
+  width: 8px;
+}
+.message_area::-webkit-scrollbar-thumb {
+  background-color: #ddd;
+  border-radius: 4px;
+}
+.message_area::-webkit-scrollbar-track {
+  background: transparent;
+}
 .message{
     display: flex;
     flex-direction: row;

@@ -15,31 +15,8 @@ import { useRef, useState, useEffect } from 'react';
 
 
 
-
 function Main() {
-    const scrollingRef = useRef(null); // Реф на область чата (.message_area)
-  const mainContainerRef = useRef(null); // Реф на главный контейнер (.main), чтобы вешать класс
-  const [isScrolling, setIsScrolling] = useState(false);
-  const timeoutRef = useRef(null);
 
-const style_scrol = ''
-
-  useEffect(() => {
-    const element = timeoutRef.current;
-    if (!element) return;
-
-    // 2. Вешаем слушатель
-    const handleScroll = (e) => {
-      console.log('СКРОЛЛ СРАБОТАЛ! Позиция:', e.target.scrollTop);
-      const style_scrol = 'auto';
-      // Тут можно делать что угодно, например: setShowSidebar(true);
-    };
-
-    element.addEventListener('scroll', handleScroll);
-    
-    // Очищаем слушатель, когда компонент удаляется
-    return () => element.removeEventListener('scroll', handleScroll);
-  }, []);
   
   
 
@@ -129,7 +106,7 @@ const style_scrol = ''
                 </div>
 
           </div>
-          <div className='message_area' style={{overflowY:style_scrol,}} ref={timeoutRef}>
+          <div className='message_area' >
             <div className='message'>
               <img src={user} className='photo_user' alt/>
                 <div className='message_user'>
