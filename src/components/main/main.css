@@ -10,7 +10,7 @@
 .main{
     width: 1180px;
     margin: auto;
-   
+   font-family: 'Lato-Regular';
     display: flex;
     height: 800px;
     
@@ -110,3 +110,199 @@ cursor: pointer;
     object-fit: cover;
     border-radius: 4px;
 }
+
+.main_big{
+    display: flex;
+    flex-direction: column;
+    height: 800px;
+    padding-top: 20px;
+    width: 100%;
+    
+    
+    
+    
+}
+.small_img{
+    width: 15px;
+    height: 15px;
+    object-fit: cover;
+    
+}
+.search_line{
+    display: flex;
+    width: 100%;
+    flex-direction: row;
+    border-bottom: 1px solid #0000003D;
+    padding-bottom: 30px;
+    padding-left: 20px;
+    padding-right: 20px;
+    
+
+}
+.search_input{
+    display: flex;
+    flex-direction: row;
+    position: relative;
+    width: 240px;
+    margin-left: 100px;
+    align-items: center;
+    gap: 22px;
+    
+   
+}
+.input_top{
+width: 240px;
+height: 30px;
+border-radius: 3px;
+border: 1px solid #0000003D;
+
+}
+
+::placeholder {
+font-weight: 400;
+font-size: 14px;
+leading-trim: NONE;
+line-height: 100%;
+letter-spacing: 0px;
+padding-left: 10px;
+
+}
+.search_button{
+    position: absolute;
+    top:8px;
+    right: 5px;
+    width: 16px;
+    height: 16px;
+}
+.search{
+    display: flex;
+    width: 500px;
+    justify-content: space-between;
+    flex-direction: row;
+    
+}
+.tag_now{
+    width: 100px;
+    display: flex;
+    gap: 15px;
+    align-items: center;
+   
+}
+.red_point{
+    width: 3px;
+    height: 3px;
+    background-color: red;
+    border-radius: 100%;
+    position: absolute;
+}
+.red_point_ding{
+    right: -40px;
+    top: 5px;
+}
+.red_point_three{
+    right: -70px;
+    top: 5px;
+}
+.tag_now h1{
+font-weight: 700;
+font-size: 20px;
+line-height: 100%;
+letter-spacing: 0px;
+
+}
+.num{
+    display: flex;
+    flex-direction: row;
+    width: 50px;
+    gap:10px;
+    align-items: center;
+    
+}
+.num h3{
+    color: #A4A4A4;
+}
+.pointer{
+    cursor: pointer;
+}
+
+
+.message_area{
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    padding-left: 20px;
+    padding-right: 20px;
+    height: 100%;
+     overflow: scroll;
+     overflow-x: hidden;
+    
+}
+
+.message{
+    display: flex;
+    flex-direction: row;
+    gap: 15px;
+    padding-bottom: 10px;
+    padding-top: 10px;
+   
+    
+    
+}
+.user_date{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap:10px;
+}
+.name_user{
+font-weight: 700;
+font-size: 12px;
+leading-trim: NONE;
+line-height: 100%;
+letter-spacing: 0px;
+}
+.user_date h4{
+font-weight: 400;
+font-size: 12px;
+leading-trim: NONE;
+line-height: 100%;
+letter-spacing: 0px;
+color: #8D8D8D;
+
+}
+.text_message {
+font-weight: 400;
+font-size: 13px;
+leading-trim: NONE;
+line-height: 20px;
+letter-spacing: 0px;
+
+}
+
+
+
+.footer_input{
+    display: flex;
+    flex-direction: row;
+    padding-top: 20px;
+    padding-left: 20px;
+    padding-right: 20px;
+    width: 100%;
+    align-items: center;
+    gap: 20px;
+    border-top: 1px solid #0000003D;
+}
+.footer_img{
+    height: 22px;
+    width: 13px;
+}
+.smile{
+    height: 22px;
+    width: 22px;
+}
+.main_form{
+    width:800px;
+    height: 50px;
+    padding-top: 5px;
+}
+
