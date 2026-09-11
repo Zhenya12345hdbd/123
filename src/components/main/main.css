@@ -30,6 +30,14 @@ padding: 20px;
     height: 8px;
     background-color: #70CC16;
 }
+
+.tochka.online {
+  background-color: #2ed573; /* Зеленый */
+  box-shadow: 0 0 8px #2ed573;
+}
+.tochka.offline {
+  background-color: #ccc; /* Серый */
+}
 .main_small_tags{
     display: flex;
     flex-direction: row;
@@ -240,7 +248,7 @@ letter-spacing: 0px;
       
      
 }
-/* Опционально: стилизовать скроллбар */
+
 
 
 .message_area:hover {
@@ -265,11 +273,47 @@ letter-spacing: 0px;
     flex-direction: row;
     gap: 15px;
     padding-bottom: 10px;
-    padding-top: 10px;
+    padding-top: 10px;  
+    
+    
    
-    
-    
 }
+.message-left{
+    justify-content: flex-start;
+
+}
+
+@keyframes blink-once {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; } /* Чуть прозрачнее */
+  100% { opacity: 1; }
+}
+
+/* Класс для мигания */
+.message-new {
+  animation: blink-once 0.6s ease-in-out; 
+  /* Если нужно, чтобы мигало 3 раза подряд, поставь: animation-iteration-count: 3; */
+}
+
+.flash-new {
+  animation: flashMessage 1s ease-out;
+  border-radius: 8px;
+}
+
+
+.message-right{
+    justify-content: flex-end;
+}
+
+
+
+
+
+
+
+
+/* Правое сообщение (мои) */
+
 .user_date{
     display: flex;
     flex-direction: row;

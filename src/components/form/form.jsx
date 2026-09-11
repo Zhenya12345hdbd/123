@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './form.css';
 
 const LoginForm = ({ onAuthSuccess }) => {
+    
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -82,8 +83,10 @@ const LoginForm = ({ onAuthSuccess }) => {
     }
   };
 
+   
+
   return (
-    <form onSubmit={handleSubmit} className="login-form">
+    <form onSubmit={handleSubmit} className="login-form" >
       <h2>{mode === 'register' ? 'Регистрация' : 'Вход'}</h2>
 
       {error && <p className="error-message">{error}</p>}
