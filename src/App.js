@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import LoginForm from './components/form/form';
-import Main from './components/main/main';
+import LoginForm from './main/form/MessageInput';
+import Main from './main/main';
 
 function App() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -26,6 +26,7 @@ function App() {
 
   return currentUser ? (
   <Main onLogout={handleLogout} initialUser={currentUser} />
+  
 ) : (
   <LoginForm onAuthSuccess={handleAuthSuccess} />
 );

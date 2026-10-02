@@ -1,9 +1,9 @@
-import './main.css';
-import star from './star.png'
-import peoople from './peoople.png';
-import found from './found.png';
-import ding from './ding.png';
-import three from './three.png';
+import '../main.css';
+import star from '../image/star.png'
+import peoople from '../image/peoople.png';
+import found from '../image/found.png';
+import ding from '../image/ding.png';
+import three from '../image/three.png';
 
 function ChatHeader() {
   return (

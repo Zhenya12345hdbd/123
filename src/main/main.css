@@ -1,0 +1,615 @@
+@font-face {
+  font-family: 'Lato-Regular';
+  src: url('/src/fonts/lato-regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+}
+
+
+
+.main{
+    width: 1180px;
+    margin: auto;
+   font-family: 'Lato-Regular';
+    display: flex;
+    height: 800px;
+    
+    
+}
+.main_small{
+    width: 260px;
+   background: #595757;
+background: linear-gradient(180deg, rgba(89, 87, 87, 1) 0%, rgba(0, 0, 0, 1) 100%);
+padding: 20px;
+    
+}
+
+.tochka{
+    width: 8px;
+    border-radius: 50%;
+    height: 8px;
+    background-color: #70CC16;
+}
+
+.tochka.online {
+  background-color: #2ed573; /* Зеленый */
+  box-shadow: 0 0 8px #2ed573;
+}
+.tochka.offline {
+  background-color: #ccc; /* Серый */
+}
+.main_small_tags{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-around;
+
+    
+    width: 100%;
+}
+.main_small_tags img{
+    width: 16px;
+    height: 16px;
+    margin-top: 3px;
+    cursor: pointer;
+}
+.main_small h1{
+    font-family: 'Lato-Regular';
+font-weight: 700;
+font-size: 20px;
+line-height: 100%;
+color: white; 
+cursor: pointer;
+
+}
+.tag_list{
+    margin-left: 15px;
+    transform: rotate(90);
+    font-weight: 400;
+}
+
+.friends{
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    justify-content: space-between;
+}
+.friends_num{
+    
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+.user_card{
+    margin-top: 15px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+}
+.entered_message{
+       height: 8px;
+    position: absolute;
+    width: 3px;
+    top: 6px;
+    right: 13px;
+    font-size: 8px;
+    color: red;
+
+}
+.name_full{
+    position: relative;
+}
+.user_name{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    
+    margin-top: 15px;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+.main_user_card{
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+}
+.button_exit{
+    padding: 5px;
+    border-radius: 5px;
+    background-color: gray;
+    
+}
+
+.button_exit:hover{
+    background-color: red;
+}
+.friends h1{
+    color: #919191;
+font-weight: 700;
+font-size: 12px;
+line-height: 100%;
+letter-spacing: 0px;
+text-transform: uppercase;
+}
+
+.list{
+    display: flex;
+    flex-direction: column;
+    margin-top: 20px;
+    gap: 10px;
+}
+.user_page{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    position: relative;
+
+}
+.user_page p{
+    color: #B5B5B5;
+font-weight: 400;
+font-size: 14px;
+line-height: 100%;
+letter-spacing: 0px;
+cursor: pointer;
+
+
+
+}
+.photo_user{
+    width: 34px;
+    height: 34px;
+    object-fit: cover;
+    border-radius: 4px;
+}
+
+.main_big{
+    display: flex;
+    flex-direction: column;
+    padding-top: 20px;
+    width: 100%;
+     min-height: 0;
+    
+    
+    
+    
+    
+}
+.small_img{
+    width: 15px;
+    height: 15px;
+    object-fit: cover;
+    
+}
+.search_line{
+    display: flex;
+    width: 100%;
+    flex-direction: row;
+    border-bottom: 1px solid #0000003D;
+    padding-bottom: 30px;
+    padding-left: 20px;
+    padding-right: 20px;
+    
+
+}
+.search_input{
+    display: flex;
+    flex-direction: row;
+    position: relative;
+    width: 240px;
+    margin-left: 100px;
+    align-items: center;
+    gap: 22px;
+    
+   
+}
+.input_top{
+width: 240px;
+height: 30px;
+border-radius: 3px;
+border: 1px solid #0000003D;
+
+}
+
+::placeholder {
+font-weight: 400;
+font-size: 14px;
+leading-trim: NONE;
+line-height: 100%;
+letter-spacing: 0px;
+padding-left: 10px;
+
+}
+.search_button{
+    position: absolute;
+    top:8px;
+    right: 5px;
+    width: 16px;
+    height: 16px;
+}
+.search{
+    display: flex;
+    width: 500px;
+    justify-content: space-between;
+    flex-direction: row;
+    
+}
+.tag_now{
+    width: 100px;
+    display: flex;
+    gap: 15px;
+    align-items: center;
+   
+}
+.red_point{
+    width: 3px;
+    height: 3px;
+    background-color: red;
+    border-radius: 100%;
+    position: absolute;
+}
+.red_point_ding{
+    right: -40px;
+    top: 5px;
+}
+.red_point_three{
+    right: -70px;
+    top: 5px;
+}
+.tag_now h1{
+font-weight: 700;
+font-size: 20px;
+line-height: 100%;
+letter-spacing: 0px;
+
+}
+.num{
+    display: flex;
+    flex-direction: row;
+    width: 50px;
+    gap:10px;
+    align-items: center;
+    
+}
+.num h3{
+    color: #A4A4A4;
+}
+.pointer{
+    cursor: pointer;
+}
+
+
+.message_area {
+  width: 100%;
+  flex: 1 1 auto;
+  min-height: 0;
+  padding-left: 20px;
+  padding-right: 20px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+
+}
+
+.message_area::-webkit-scrollbar {
+     width: 0px;
+     transition: width 0.7s ease;
+}
+.message_area::-webkit-scrollbar-track { background: transparent; }
+.message_area::-webkit-scrollbar-thumb {
+  background-color: rgba(0,0,0,0.2);
+  border-radius: 4px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+.message_area:hover::-webkit-scrollbar {
+  width: 8px; 
+}
+
+
+
+
+
+.messages{
+    width: 900px;
+}
+
+.message{
+    display: flex;
+    flex-direction: row;
+    gap: 15px;
+    padding-bottom: 10px;
+    padding-top: 10px;  
+    width: 100%; 
+    margin-top: auto;  
+}
+
+.message-left{
+    justify-content: flex-start;
+}
+.message-right{
+    justify-content: flex-end;
+}
+.message_user_right{
+    justify-content: flex-end;
+}
+
+/* стралочки */
+.arrow-4 {
+    position: relative;
+    margin-top: -11px;
+    width: 15px;
+    
+}
+.arrow-4-right {
+    position: absolute;
+    top: 2px;
+    left: 5px;
+    width: 10px;
+    border-right: 2px solid #B6D8D3;
+    border-top: 2px solid #B6D8D3;
+    height: 10px;
+    display: block;
+    transform: rotate(226deg);
+    float: right;
+    border-radius: 2px;
+    z-index: 1;
+}
+.arrow-4-right_second{
+    top: 2px;
+    left: 15px;
+}
+.arrow-4-right_change_color{
+      border-right: 2px solid #70CC16;
+    border-top: 2px solid #70CC16 ;
+}
+
+.text_with_arrow{
+    display: flex;
+    
+    flex-direction: row;
+    
+    margin-top: 5px;
+    align-items: center;
+}
+
+
+
+.message_user{
+     background-color: #E0E0E0;
+    border-radius: 45px;
+    padding: 7px 12px;
+    height: auto;
+}
+
+@keyframes blink-once {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; } /* Чуть прозрачнее */
+  100% { opacity: 1; }
+}
+
+/* Класс для мигания */
+.message-new {
+  animation: blink-once 0.6s ease-in-out; 
+animation-iteration-count: 3;
+  /* Если нужно, чтобы мигало 3 раза подряд, поставь:  */
+}
+
+.flash-new {
+  animation: flashMessage 1s ease-out;
+  border-radius: 8px;
+}
+
+
+.message-right{
+    justify-content: flex-end;
+}
+.system_message{
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    justify-content: center;
+    
+}
+.photo_none{
+    display: none;
+}
+
+
+/* Правое сообщение (мои) */
+
+.user_date{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    
+    gap:10px;
+}
+.user_date_left{
+    justify-content: start;
+    
+}
+.user_date_right{
+    justify-content: end;
+    
+}
+
+.name_user{
+font-weight: 700;
+font-size: 12px;
+leading-trim: NONE;
+line-height: 100%;
+letter-spacing: 0px;
+}
+.user_date h4{
+font-weight: 400;
+font-size: 12px;
+leading-trim: NONE;
+line-height: 100%;
+letter-spacing: 0px;
+color: #8D8D8D;
+
+}
+.text_message {
+font-weight: 400;
+font-size: 13px;
+leading-trim: NONE;
+line-height: 20px;
+letter-spacing: 0px;
+padding-bottom: 10px;
+
+}
+
+
+
+.footer_input{
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    border-top: 1px solid #0000003D;
+}
+.footer_main{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    padding-top: 20px;
+    padding-left: 20px;
+    padding-right: 20px;
+    width: 100%;
+}
+.footer_img{
+    height: 22px;
+    width: 13px;
+}
+.smile{
+    height: 22px;
+    width: 22px;
+}
+.main_form{
+    width:800px;
+    height: 50px;
+    padding-top: 5px;
+}
+
+
+/* превью картиновы выбранных */
+
+.previu_image{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 8px 16px;
+    background-color: white;
+    border-radius: 6px;
+    align-items: center;
+    width: 200px;
+}
+
+.prev_img_div{
+    position: relative;
+}
+.prev_img_div img{
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 6px;
+    display: block;
+}
+.button_delete_one_image{
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: none;
+    background-color: red;
+    color: white;
+    cursor: pointer;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+
+}
+
+.div_all_image {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);   /* всегда 2 колонки */
+    grid-auto-rows: 140px;
+    gap: 4px;
+    width: 290px;
+    max-width: 100%;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+/* варианты сетки по количеству картинок */
+.div_all_image.count-1 {
+    grid-template-columns: 1fr;
+    width: fit-content;
+    max-width: 280px;
+    grid-auto-rows: auto;
+}
+.div_all_image.count-odd > img:last-child {
+    grid-column: span 2;
+}
+
+
+/* сами картинки */
+.img_in_message_much {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    cursor: pointer;
+    border-radius: 4px;
+}
+.img_in_message_much:hover {
+    opacity: 0.9;
+}
+
+/* одиночная картинка (тип image) */
+.img_in_message_one {
+    max-width: 280px;
+    max-height: 280px;
+    width: auto;
+    height: auto;
+    border-radius: 8px;
+    object-fit: cover;
+    cursor: pointer;
+}
+
+/* прижимаем блок картинок к нужной стороне в сообщении */
+.message-right .div_all_image {
+    margin-left: auto;
+    justify-self: end;
+}
+.message-left .div_all_image {
+    margin-right: auto;
+    justify-self: start;
+}
+
+
+/* увелличенные картинки */
+.zoom{
+    position: fixed;
+    inset: 0;
+    background-color:rgba(0,0,0,0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    cursor: zoom-out;
+}
+.zoomed_img{
+    max-width: 90vw;
+    max-height: 90vh;
+    border-radius: 8px;
+    object-fit: contain;
+    cursor: zoom-out;
+    transition: transform 0.2s ease;
+}
