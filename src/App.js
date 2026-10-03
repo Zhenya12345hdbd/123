@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import LoginForm from './main/form/MessageInput';
+import LoginForm from './main/form/form';
 import Main from './main/main';
 
 function App() {

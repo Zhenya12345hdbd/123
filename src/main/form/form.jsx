@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import './form.css';
-import '../main/main.css';
+import '../main.css';
 
 const LoginForm = ({ onAuthSuccess }) => {
   const [formData, setFormData] = useState({

@@ -14,6 +14,7 @@ export function useWebSocket({
     if (!currentUser) return;
 
     const socket = new WebSocket('ws://localhost:8081');
+    
     socketRef.current = socket;
 
     const markRead = (roomId) => {
