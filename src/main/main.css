@@ -583,7 +583,12 @@ padding-bottom: 10px;
 }
 
 .show_all{
-    color: green;
+        color: white;
+    background-color: red;
+    margin-top: 265px;
+    text-align: center;
+    font-size: larger;
+    
 }
 
 
