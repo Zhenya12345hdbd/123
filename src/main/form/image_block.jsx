@@ -2,8 +2,9 @@ import React from 'react';
 import { useState } from 'react';
 
 function ImageGrid({ imagePaths, onImageClick }) {
-    const [onn , setOnn] = useState('more_4_inside_block');
-    const [more , setMore] = useState('more_4');
+    const [onn , setOnn] = useState(false);
+    const [more , setMore] = useState(true);
+    const [changeText , setChangeText] = useState(false)
   if (!imagePaths || imagePaths.length === 0) return null;
 
   const n = imagePaths.length;
@@ -13,15 +14,18 @@ function ImageGrid({ imagePaths, onImageClick }) {
     'count-even';
 
     const showAll = () =>{
-            setOnn('more_4_inside_none')
-            setMore('little')
+            setOnn(!onn)
+            setMore(!more)
+            setChangeText(!changeText)
     }
     
 
   return (
-    <div className={`div_all_image ${countClass} ${imagePaths.length > 4 ? 'more_4' : ''} ${more}`}>
-        <div  className={`shadow ${imagePaths.length > 4 ? 'more_4_inside_block' : 'more_4_inside_none'} ${onn}`}>
-            <p className='show_all' onClick={showAll}>показать все</p>
+    <div className={`div_all_image ${countClass} ${imagePaths.length > 4 ? 'more_4' : ''} ${more === true ? 'height_auto' : 'little'}`}>
+        <div  className={`shadow ${imagePaths.length > 4 ? 'more_4_inside_block' : 'more_4_inside_none'} ${onn ===  false ? 'more_4_inside_block' : 'more_4_inside_none'}`}>    
+        </div>
+        <div className={`text_button_show_all_image ${imagePaths.length > 4 ? 'more_4_inside_block' : 'more_4_inside_none'}`} >
+            <p className='show_all' onClick={showAll}>{changeText === true ? 'Скрыть все' : 'Показать все'}</p>
         </div>
       {imagePaths.map((path, idx) => (
         <img

@@ -545,9 +545,15 @@ padding-bottom: 10px;
     max-width: 100%;
     border-radius: 8px;
     overflow: hidden;
-    
 }
 
+.height_auto{
+    height: auto;
+    
+}
+.little{
+    height: auto;
+}
 /* варианты сетки по количеству картинок */
 .div_all_image.count-1 {
     grid-template-columns: 1fr;
@@ -562,9 +568,7 @@ padding-bottom: 10px;
     position: relative;
     height: 280px;
 }
-.little{
-    height: auto;
-}
+
 .shadow{
     background-color: black;
     opacity: 50%;
@@ -583,14 +587,27 @@ padding-bottom: 10px;
 }
 
 .show_all{
-        color: white;
-    background-color: red;
-    margin-top: 265px;
+        color: #fff;
+    background-color: rgba(0, 0, 0, 0.6);
     text-align: center;
-    font-size: larger;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 6px 0;
+    margin: 0;
+    border-radius: 0 0 8px 8px;
+    transition: background-color 0.2s ease;
     
 }
-
+.text_button_show_all_image{
+    position: absolute;
+    bottom: 0;
+    height: 30px;
+    width: 100%;
+    cursor: pointer;
+}
+.show_all:hover{
+   background-color: rgba(0, 0, 0, 0.8);
+}
 
 /* сами картинки */
 .img_in_message_much {
@@ -601,9 +618,7 @@ padding-bottom: 10px;
     cursor: pointer;
     border-radius: 4px;
 }
-.img_in_message_much:hover {
-    opacity: 0.9;
-}
+
 
 /* одиночная картинка (тип image) */
 .img_in_message_one {
