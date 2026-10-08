@@ -1,32 +1,29 @@
-function MediaGrid({ media, onMediaClick }) {
-  if (!media || media.length === 0) return null;
+// ImageGrid.jsx
+import React from 'react';
+
+function ImageGrid({ media, onMediaClick }) {
+  if (!media || !Array.isArray(media) || media.length === 0) return null;
 
   return (
-    <div className="media-grid">
+    <div className="image-grid">
       {media.map((item, idx) => {
-        const isVideo = item.type === 'video';
+        const isImage = item.type === 'image' || /\.(jpg|jpeg|png|gif|webp|avif)$/i.test(item.name || '');
 
         return (
           <div
             key={idx}
-            className="media-grid-item"
+            className={`image-grid-item ${isImage ? 'image-item' : 'file-item'}`}
             onClick={() => onMediaClick(item)}
+            title={item.name}
           >
-            {isVideo ? (
-              <video
-                src={item.path}
-                className="media-thumb"
-                preload="metadata"
-                muted
-              />
+            {isImage ? (
+              <img src={item.path} alt={item.name} loading="lazy" />
             ) : (
-              <img
-                src={item.path}
-                alt={item.name || 'image'}
-                className="media-thumb"
-                loading="lazy"
-              />
+              <div className="file-icon">
+                <span>{item.name?.split('.').pop()?.toUpperCase() || 'FILE'}</span>
+              </div>
             )}
+            <div className="image-caption">{item.name}</div>
           </div>
         );
       })}
@@ -34,4 +31,4 @@ function MediaGrid({ media, onMediaClick }) {
   );
 }
 
-export default MediaGrid;
+export default ImageGrid;

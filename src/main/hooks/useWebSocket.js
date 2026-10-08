@@ -60,6 +60,7 @@ export function useWebSocket({
         case 'message':
         case 'image_batch':
         case 'image_batch_with_text':
+        case 'file_batch_with_text':
           handleIncomingChat(data);
           break;
 

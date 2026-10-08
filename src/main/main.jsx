@@ -76,28 +76,29 @@ function Main({ onLogout }) {
 
   const { openRoom } = useChatRooms({ currentUser, activeRoomIdRef });
 
-  const handleClientClick = async (userId, name) => {
-    await openRoom({
-      userId,
-      name,
-      onOpen: ({ roomId, chatId, chatName }) => {
-        setActiveRoomId(roomId);
-        setActiveChatId(chatId);
-        setActiveChatName(chatName);
-        setMessages([]);
-        clearForUser(userId);
-      },
-      onLoaded: (normalized) => setMessages(normalized),
-    });
+  
+const handleClientClick = async (userId, name) => {
+  await openRoom({
+    userId,
+    name,
+    onOpen: ({ roomId, chatId, chatName }) => {
+      setActiveRoomId(roomId);
+      setActiveChatId(chatId);
+      setActiveChatName(chatName);
+      // НЕ очищаем messages здесь! Пусть история приходит через onLoaded
+      clearForUser(userId);
+    },
+    onLoaded: (normalized) => setMessages(normalized), // сюда уже приходит готовая история
+  });
 
-    if (activeRoomIdRef.current) {
-      send({
-        type: 'mark_all_read',
-        room_id: activeRoomIdRef.current,
-        user_id: currentUser.id,
-      });
-    }
-  };
+  if (activeRoomIdRef.current) {
+    send({
+      type: 'mark_all_read',
+      room_id: activeRoomIdRef.current,
+      user_id: currentUser.id,
+    });
+  }
+};
 
   const sendMessage = (text) => {
     if (!activeRoomId) {
@@ -114,36 +115,35 @@ function Main({ onLogout }) {
   };
 
   const sendImages = async (text = '') => {
-  if (!activeRoomId) return;
-  if (pendingFiles.length === 0 && !text.trim()) return;
+    if (!activeRoomId) return;
+    if (pendingFiles.length === 0 && !text.trim()) return;
 
-  setIsUploading(true);
+    setIsUploading(true);
 
-  const media = [];
-  for (const file of pendingFiles) {
-    try {
-      const data = await uploadImage(file); // возвращает { path, type, mime, name, size }
-      if (data) media.push(data);
-    } catch (err) {
-      console.error('Ошибка загрузки файла:', file.name, err);
-      // Можно либо прервать всю отправку, либо продолжить с остальными файлами — как удобнее
+    const uploaded = [];
+    for (const file of pendingFiles) {
+      try {
+        const data = await uploadImage(file);
+        if (data) uploaded.push(data);
+      } catch (err) {
+        console.error('Ошибка загрузки файла:', file.name, err);
+      }
     }
-  }
 
-  setIsUploading(false);
-  clearPendingFiles();
+    setIsUploading(false);
+    clearPendingFiles();
 
-  // ВАЖНО: тип должен совпадать с Chat.php: media_batch_with_text
-  const ok = send({
-    type: 'media_batch_with_text',
-    room_id: activeRoomIdRef.current,
-    media: media,
-    text: text.trim(),
-  });
+    if (uploaded.length === 0 && !text.trim()) return;
 
-  if (!ok) alert('Нет соединения с чатом');
-};
+    const ok = send({
+      type: 'file_batch_with_text',
+      room_id: activeRoomIdRef.current,
+      file_paths: uploaded,
+      text: text.trim(),
+    });
 
+    if (!ok) alert('Нет соединения с чатом');
+  };
 
   return (
     <div className="main">
@@ -155,7 +155,6 @@ function Main({ onLogout }) {
         onClientClick={handleClientClick}
         activeChatId={activeChatId}
         unreadCounts={unreadCounts}
-
       />
 
       <div className="main_big">

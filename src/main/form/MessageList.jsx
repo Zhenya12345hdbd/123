@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import '../main.css';
 import user from '../image/photo_user.avif';
-import ImageGrid from './image_block';
+/* import ImageGrid from './image_block'; */
+import ImageGrid from './mediaGrid';
 
 function MessageList({ messages, currentUser, chatRef, isConnected }) {
     const [zoomedMedia, setZoomedMedia] = useState(null);
@@ -27,9 +28,9 @@ function MessageList({ messages, currentUser, chatRef, isConnected }) {
                             const isSystem = msg.type === 'system';
 
                             const hasMedia =
-                                msg.type === 'media_batch_with_text' &&
-                                Array.isArray(msg.media) &&
-                                msg.media.length > 0;
+                                msg.type === 'file_batch_with_text' &&
+                                Array.isArray(msg.file_paths) &&
+                                msg.file_paths.length > 0;
 
                             const hasText = msg.text && msg.text.trim() !== '';
 
@@ -59,7 +60,7 @@ function MessageList({ messages, currentUser, chatRef, isConnected }) {
                                         <div className="text_with_arrow">
                                             {hasMedia && (
                                                 <ImageGrid
-                                                    media={msg.media}
+                                                    media={msg.file_paths}
                                                     onMediaClick={handleMediaClick}
                                                 />
                                             )}
@@ -93,7 +94,6 @@ function MessageList({ messages, currentUser, chatRef, isConnected }) {
                 </div>
             </div>
 
-            {/* Оверлей: фото — зум, видео — плеер, аудио — плеер, файлы — скачивание */}
             {zoomedMedia && (
                 <div className="zoom" onClick={() => setZoomedMedia(null)}>
                     {zoomedMedia.type === 'video' ? (
