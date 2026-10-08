@@ -114,32 +114,36 @@ function Main({ onLogout }) {
   };
 
   const sendImages = async (text = '') => {
-    if (!activeRoomId) return;
-    if (pendingFiles.length === 0 && !text) return;
+  if (!activeRoomId) return;
+  if (pendingFiles.length === 0 && !text.trim()) return;
 
-    setIsUploading(true);
+  setIsUploading(true);
 
-    const paths = [];
-    for (const file of pendingFiles) {
-      try {
-        const path = await uploadImage(file);
-        if (path) paths.push(path);
-      } catch (err) {
-        console.error('Ошибка загрузки файла:', file.name, err);
-      }
+  const media = [];
+  for (const file of pendingFiles) {
+    try {
+      const data = await uploadImage(file); // возвращает { path, type, mime, name, size }
+      if (data) media.push(data);
+    } catch (err) {
+      console.error('Ошибка загрузки файла:', file.name, err);
+      // Можно либо прервать всю отправку, либо продолжить с остальными файлами — как удобнее
     }
+  }
 
-    setIsUploading(false);
-    clearPendingFiles();
+  setIsUploading(false);
+  clearPendingFiles();
 
-    const ok = send({
-      type: 'image_batch_with_text',
-      room_id: activeRoomIdRef.current,
-      image_paths: paths,
-      text: text.trim(),
-    });
-    if (!ok) alert('Нет соединения с чатом');
-  };
+  // ВАЖНО: тип должен совпадать с Chat.php: media_batch_with_text
+  const ok = send({
+    type: 'media_batch_with_text',
+    room_id: activeRoomIdRef.current,
+    media: media,
+    text: text.trim(),
+  });
+
+  if (!ok) alert('Нет соединения с чатом');
+};
+
 
   return (
     <div className="main">
