@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { createRoom, fetchHistory } from '../api/rooms';
-import { normalizeHistory } from '../utils/normalizeHistory';
+
 
 export function useChatRooms({ currentUser, activeRoomIdRef }) {
   const openRoom = useCallback(
@@ -13,7 +13,7 @@ export function useChatRooms({ currentUser, activeRoomIdRef }) {
         onOpen({ roomId: data.room_id, chatId: userId, chatName: name });
 
         const hist = await fetchHistory(data.room_id, currentUser.id);
-        onLoaded(normalizeHistory(hist));
+        onLoaded(hist);
 
         return data.room_id;
       } catch (e) {
