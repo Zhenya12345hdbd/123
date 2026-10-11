@@ -1,13 +1,15 @@
 import React from 'react';
 import { useState } from 'react';
+import Image from './tipes_file/image';
+import Video from './tipes_file/video';
 
-function ImageGrid({ imagePaths, onImageClick }) {
+function ImageGrid({ media, onMediaClick }) {
     const [onn , setOnn] = useState(false);
     const [more , setMore] = useState(true);
     const [changeText , setChangeText] = useState(false)
-  if (!imagePaths || imagePaths.length === 0) return null;
+  if (!media || media.length === 0) return null;
 
-  const n = imagePaths.length;
+  const n = media.length;
   const countClass =
     n === 1 ? 'count-1' :
     n % 2 === 1 ? 'count-odd' :
@@ -19,23 +21,32 @@ function ImageGrid({ imagePaths, onImageClick }) {
             setChangeText(!changeText)
     }
     
+    
 
   return (
-    <div className={`div_all_image ${countClass} ${imagePaths.length > 4 ? 'more_4' : ''} ${more === false ? 'height_auto' : 'little'}`}>
-        <div  className={`shadow ${imagePaths.length > 4 ? 'more_4_inside_block' : 'more_4_inside_none'} ${onn ===  false ? 'more_4_inside_block' : 'more_4_inside_none'}`}>    
+    <div className={`div_all_image ${countClass} ${media.length > 4 ? 'little': ''} ${more === false ? 'height_auto' : ''}`}>
+        <div  className={`shadow ${media.length > 4 ? 'more_4_inside_block' : 'more_4_inside_none'} ${onn ===  false ? 'more_4_inside_block' : 'more_4_inside_none'}`}>    
         </div>
-        <div className={`text_button_show_all_image ${imagePaths.length > 4 ? 'more_4_inside_block' : 'more_4_inside_none'}`} >
+        <div className={`text_button_show_all_image ${media.length > 4 ? 'more_4_inside_block' : 'more_4_inside_none'}`} >
             <p className='show_all' onClick={showAll}>{changeText === true ? 'Скрыть все' : 'Показать все'}</p>
         </div>
-      {imagePaths.map((path, idx) => (
-        <img
-          key={idx}
-          className='img_in_message_much'
-          src={path}
-          alt={`image-${idx}`}
-          onClick={() => onImageClick(path)}
-        />
-      ))}
+          {media.map((path, idx) => (
+              path.type === 'images' ? (
+            <Image
+              key={idx}
+              path={path}
+              idx={idx}
+              onImageClick={onMediaClick}
+            />
+          ) : path.type === 'videos' ?(
+            <Video
+               key={idx}
+              path={path}
+              idx={idx}
+              onImageClick={onMediaClick}
+            />
+          ) : null
+        ))}
     </div>
   );
 }

@@ -2,16 +2,20 @@ import React, { useState } from 'react';
 import '../main.css';
 import user from '../image/photo_user.avif';
 /* import ImageGrid from './image_block'; */
-import ImageGrid from './mediaGrid';
+import ImageGrid from './image_block';
 
 function MessageList({ messages, currentUser, chatRef, isConnected }) {
     const [zoomedMedia, setZoomedMedia] = useState(null);
 
     if (!currentUser) return null;
 
-    const handleMediaClick = (item) => {
-        setZoomedMedia(item);
-    };
+      const handleMediaClick = (item) => {
+    // item может быть строкой (путь) или объектом — нормализуем
+
+
+    setZoomedMedia(item);
+    console.log('Открываем:', ); // логируем сразу нормализованный объект
+  };
 
     return (
         <>
@@ -96,7 +100,7 @@ function MessageList({ messages, currentUser, chatRef, isConnected }) {
 
             {zoomedMedia && (
                 <div className="zoom" onClick={() => setZoomedMedia(null)}>
-                    {zoomedMedia.type === 'video' ? (
+                    {zoomedMedia.type === 'videos' ? (
                         <video
                             className="zoomed_video"
                             src={zoomedMedia.path}
@@ -109,7 +113,7 @@ function MessageList({ messages, currentUser, chatRef, isConnected }) {
                             <p>{zoomedMedia.name || 'Аудио'}</p>
                             <audio src={zoomedMedia.path} controls autoPlay />
                         </div>
-                    ) : zoomedMedia.type === 'image' ? (
+                    ) : zoomedMedia.type === 'images' ? (
                         <img
                             className="zoomed_img"
                             src={zoomedMedia.path}
