@@ -24,7 +24,7 @@ function ImageGrid({ media, onMediaClick }) {
     
 
   return (
-    <div className={`div_all_image ${countClass} ${media.length > 4 ? 'little': ''} ${more === false ? 'height_auto' : ''}`}>
+    <div className={`div_all_image ${countClass} ${media.length > 4 && more === true ? 'little': "height_auto"} `}>
         <div  className={`shadow ${media.length > 4 ? 'more_4_inside_block' : 'more_4_inside_none'} ${onn ===  false ? 'more_4_inside_block' : 'more_4_inside_none'}`}>    
         </div>
         <div className={`text_button_show_all_image ${media.length > 4 ? 'more_4_inside_block' : 'more_4_inside_none'}`} >
