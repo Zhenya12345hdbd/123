@@ -120,14 +120,14 @@ function MessageList({ messages, currentUser, chatRef, isConnected }) {
                             alt="Zoomed"
                             onClick={(e) => e.stopPropagation()}
                         />
-                    ) : (
+                    ) : zoomedMedia.type === 'files' ? (
                         <div className="zoomed_file" onClick={(e) => e.stopPropagation()}>
                             <p>{zoomedMedia.name || 'Файл'}</p>
                             <a href={zoomedMedia.path} download className="btn_download">
                                 Скачать
                             </a>
                         </div>
-                    )}
+                    ): null}
                 </div>
             )}
         </>
