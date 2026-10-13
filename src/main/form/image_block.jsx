@@ -7,7 +7,7 @@ import Files from './tipes_file/files';
 function ImageGrid({ media, onMediaClick }) {
     const [onn , setOnn] = useState(false);
     const [more , setMore] = useState(true);
-    const [size , setSize] = useState(false);
+    
     const [changeText , setChangeText] = useState(false)
   if (!media || media.length === 0) return null;
 
@@ -16,10 +16,9 @@ function ImageGrid({ media, onMediaClick }) {
     n === 1 ? 'count-1' :
     n % 2 === 1 ? 'count-odd' :
     'count-even';
-    if(media.type === 'file'){
-      setSize(true);
-
-    }
+    
+    const hasFile = media.some(item => item.type === 'file');
+  const baseClass = hasFile ? 'div_all_image_small' : 'div_all_image';
 
 
     const showAll = () =>{
@@ -31,7 +30,7 @@ function ImageGrid({ media, onMediaClick }) {
     
 
   return (
-    <div className={`${size === false ? 'div_all_image' : 'div_all_image_small'} ${countClass} ${media.length > 4 && more === true ? 'little': "height_auto"} `}>
+    <div className={`${baseClass} ${countClass} ${media.length > 4 && more === true ? 'little': "height_auto"} `}>
         <div  className={`shadow ${media.length > 4 ? 'more_4_inside_block' : 'more_4_inside_none'} ${onn ===  false ? 'more_4_inside_block' : 'more_4_inside_none'}`}>    
         </div>
         <div className={`text_button_show_all_image ${media.length > 4 ? 'more_4_inside_block' : 'more_4_inside_none'}`} >
