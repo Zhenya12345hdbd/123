@@ -750,20 +750,20 @@ padding-bottom: 10px;
     display: flex;
     flex-direction: row;
     align-items: center;
+    cursor: pointer;
 }
 .file_icon{
     width: 25px;
 }
 .div_all_image_small{
     display: flex;
-    grid-template-columns: repeat(2, 1fr);   /* всегда 2 колонки */
-    grid-auto-rows: 140px;
+    flex-direction: column;
     gap: 4px;
     width: 290px;
     max-width: 100%;
     border-radius: 8px;
     overflow: hidden;
-    height: auto;
+    
     position: relative;
     
 }
