@@ -1,7 +1,7 @@
 import React from 'react';
 
 
-function Image({ onImageClick, path,idx }) {
+function Image({ onImageClick, path,idx, onLoad }) {
    
    
   return (
@@ -12,6 +12,7 @@ function Image({ onImageClick, path,idx }) {
           src={path.path}
           alt={`image-${idx}`}
           onClick={() => onImageClick(path)}
+          onLoad={() => onLoad?.()}
         />
      
     

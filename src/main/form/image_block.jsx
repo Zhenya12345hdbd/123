@@ -14,14 +14,35 @@ function ImageGrid({ media, onMediaClick }) {
     const [realHeight, setRealHeight] = useState(0);
     const [little, setLittle] = useState(true);
 
+        const [isReady, setIsReady] = useState(false); // флаг: медиа «готовы» для расчёта высоты
+    const imageCount = media.filter(m => m.type === 'images').length;
+    const loadedImages = useRef(0);
+
     useEffect(() => {
+  loadedImages.current = 0;
+  setIsReady(false);
+  if (imageCount === 0) {
+    // Если картинок нет, высота уже корректна (файлы имеют фиксированный размер)
     if (gridRef.current) {
       setRealHeight(gridRef.current.offsetHeight);
-      // теперь у тебя есть реальная высота блока в пикселях
+      setIsReady(true);
     }
-  }, [media]);
+    return;
+  }
+}, [media]);
+const onImageLoad = () => {
+  loadedImages.current += 1;
+  if (loadedImages.current >= imageCount) {
+    if (gridRef.current) {
+      setRealHeight(gridRef.current.offsetHeight);
+      setIsReady(true);
+    }
+  }
+};
 
-  const needsButton = realHeight > 0 && realHeight > 280 && more;
+
+
+  const needsButton = realHeight > 0 && realHeight > 290 && more;
   const heightClass = needsButton ? 'little' : 'height_auto';
 
   if (!media || media.length === 0) return null;
@@ -48,7 +69,7 @@ function ImageGrid({ media, onMediaClick }) {
     <div className={`${hasFile > 1 ? 'div_all_image_small' : 'div_all_image' } ${countClass}  ${needsButton && more === true ? 'little': "height_auto"}  `} ref={gridRef}>
         <div  className={`shadow ${needsButton && more === true ? 'more_4_inside_block' : 'more_4_inside_none'} ${onn ===  false ? 'more_4_inside_block' : 'more_4_inside_none'}`}>    
         </div>
-        <div className={`text_button_show_all_image ${needsButton ? 'more_4_inside_block' : 'more_4_inside_none'}`} >
+        <div className={`text_button_show_all_image ${needsButton ||  more === false  ? 'more_4_inside_block' : 'more_4_inside_none'}`} >
             <p className='show_all' onClick={showAll}>{changeText === true ? 'Скрыть все' : 'Показать все'}</p>
             <p>{realHeight}</p>
         </div>
@@ -59,6 +80,7 @@ function ImageGrid({ media, onMediaClick }) {
               path={path}
               idx={idx}
               onImageClick={onMediaClick}
+              onLoad={onImageLoad}
             />
           ) : path.type === 'videos' ?(
             <Video
