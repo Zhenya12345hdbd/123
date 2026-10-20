@@ -10,14 +10,13 @@ import { useUsers } from './hooks/useUsers';
 import { sizeImage } from './hooks/size_image';
 import { useUnreadCounts } from './hooks/useUnreadCounts';
 import { useWebSocket } from './hooks/useWebSocket';
-import { useAutoScroll } from './hooks/useAutoScroll';
 import { usePendingFiles } from './hooks/usePendingFiles';
 import { useChatRooms } from './hooks/useChatRooms';
+import { useChatHistory } from './hooks/useChatHistory';
 
 import { uploadImage } from './api/upload';
 
 function Main({ onLogout }) {
-  const [messages, setMessages] = useState([]);
   const [onlineUsers, setOnlineUsers] = useState([]);
 
   const [activeRoomId, setActiveRoomId] = useState(null);
@@ -46,19 +45,26 @@ function Main({ onLogout }) {
     clear: clearPendingFiles,
   } = usePendingFiles();
 
+  const {
+    messages,
+    hasMore,
+    isLoadingMore,
+    setInitial,
+    setRoomId,
+    appendMessage,
+    patchMessage,
+    loadOlder,
+  } = useChatHistory(currentUser);
+
   const { isConnected, send } = useWebSocket({
     currentUser,
     activeRoomIdRef,
     onMessage: (data) => {
       if (data.__read) {
-        setMessages((prev) =>
-          prev.map((msg) =>
-            msg.id === data.message_id ? { ...msg, is_read: 1 } : msg
-          )
-        );
+        patchMessage(data.message_id, { is_read: 1 });
         return;
       }
-      setMessages((prev) => [...prev, data]);
+      appendMessage(data);
     },
     onUnreadIncrement: incrementForUser,
     onStatus: ({ userId, isOnline }) => {
@@ -72,33 +78,30 @@ function Main({ onLogout }) {
     },
   });
 
-  useAutoScroll(chatRef, [messages]);
-
   const { openRoom } = useChatRooms({ currentUser, activeRoomIdRef });
 
-  
-const handleClientClick = async (userId, name) => {
-  await openRoom({
-    userId,
-    name,
-    onOpen: ({ roomId, chatId, chatName }) => {
-      setActiveRoomId(roomId);
-      setActiveChatId(chatId);
-      setActiveChatName(chatName);
-      // НЕ очищаем messages здесь! Пусть история приходит через onLoaded
-      clearForUser(userId);
-    },
-    onLoaded: (normalized) => setMessages(normalized), // сюда уже приходит готовая история
-  });
-
-  if (activeRoomIdRef.current) {
-    send({
-      type: 'mark_all_read',
-      room_id: activeRoomIdRef.current,
-      user_id: currentUser.id,
+  const handleClientClick = async (userId, name) => {
+    await openRoom({
+      userId,
+      name,
+      onOpen: ({ roomId, chatId, chatName }) => {
+        setActiveRoomId(roomId);
+        setActiveChatId(chatId);
+        setActiveChatName(chatName);
+        setRoomId(roomId);
+        clearForUser(userId);
+      },
+      onLoaded: (msgs, more) => setInitial(msgs, more),
     });
-  }
-};
+
+    if (activeRoomIdRef.current) {
+      send({
+        type: 'mark_all_read',
+        room_id: activeRoomIdRef.current,
+        user_id: currentUser.id,
+      });
+    }
+  };
 
   const sendMessage = (text) => {
     if (!activeRoomId) {
@@ -170,6 +173,9 @@ const handleClientClick = async (userId, name) => {
           isConnected={isConnected}
           unreadCounts={unreadCounts}
           sizeImage={sizeImage}
+          hasMore={hasMore}
+          isLoadingMore={isLoadingMore}
+          onLoadOlder={loadOlder}
         />
 
         {activeRoomId && (

@@ -1,7 +1,6 @@
 import { useCallback } from 'react';
 import { createRoom, fetchHistory } from '../api/rooms';
 
-
 export function useChatRooms({ currentUser, activeRoomIdRef }) {
   const openRoom = useCallback(
     async ({ userId, name, onOpen, onLoaded }) => {
@@ -12,8 +11,8 @@ export function useChatRooms({ currentUser, activeRoomIdRef }) {
         activeRoomIdRef.current = data.room_id;
         onOpen({ roomId: data.room_id, chatId: userId, chatName: name });
 
-        const hist = await fetchHistory(data.room_id, currentUser.id);
-        onLoaded(hist);
+        const hist = await fetchHistory(data.room_id, currentUser.id, { limit: 10 });
+        onLoaded(hist.messages || [], !!hist.has_more);
 
         return data.room_id;
       } catch (e) {

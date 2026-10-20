@@ -8,7 +8,7 @@
 
 
 .main{
-    width: 1180px;
+    width: 1300px;
     margin: auto;
    font-family: 'Lato-Regular';
     display: flex;
@@ -17,7 +17,7 @@
     
 }
 .main_small{
-    width: 260px;
+    width: 340px;
    background: #595757;
 background: linear-gradient(180deg, rgba(89, 87, 87, 1) 0%, rgba(0, 0, 0, 1) 100%);
 padding: 20px;
@@ -138,6 +138,18 @@ text-transform: uppercase;
     flex-direction: column;
     margin-top: 20px;
     gap: 10px;
+    height: 538px;
+    overflow-y: scroll;
+}
+.list::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+.list::-webkit-scrollbar-track {
+  background: transparent;
+}
+.list::-webkit-scrollbar-thumb {
+  background: transparent;
 }
 .user_page{
     display: flex;

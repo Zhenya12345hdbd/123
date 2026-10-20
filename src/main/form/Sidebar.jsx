@@ -7,6 +7,16 @@ function Sidebar({ onLogout, users, onlineUsers, currentUser, onClientClick, act
   const withoutMe = users.filter(
     user => String(user.id) !== String(currentUser?.id)
   );
+  const sortedUsers = [...withoutMe].sort((a, b) => {
+  const aOnline = onlineUsers.some(id => String(id) === String(a.id));
+  const bOnline = onlineUsers.some(id => String(id) === String(b.id));
+
+  if (aOnline !== bOnline) return aOnline ? -1 : 1; // онлайн выше
+
+  const aName = `${a.first_name} ${a.last_name}`.toLowerCase();
+  const bName = `${b.first_name} ${b.last_name}`.toLowerCase();
+  return aName.localeCompare(bName, 'ru');
+});
 
   return (
     <div className="main_small">
@@ -43,7 +53,7 @@ function Sidebar({ onLogout, users, onlineUsers, currentUser, onClientClick, act
           {users.length === 0 ? (
             <p style={{ color: '#888', textAlign: 'center' }}>Загрузка...</p>
           ) : (
-            withoutMe.map((u) => {
+            sortedUsers.map((u) => {
               const isUserOnline = onlineUsers.some(id => String(id) === String(u.id));
               const isActive = String(u.id) === String(activeChatId);
               
