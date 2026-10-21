@@ -21,6 +21,7 @@ function App() {
     localStorage.removeItem('chat_user');
     setCurrentUser(null);
   };
+  
 
   if (isLoading) return <div>Загрузка...</div>;
 

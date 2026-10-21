@@ -4,6 +4,12 @@ import settings from '../image/settings.png';
 import userPlaceholder from '../image/photo_user.avif'; 
 
 function Sidebar({ onLogout, users, onlineUsers, currentUser, onClientClick, activeChatId, unreadCounts }) {
+  const handleLogout = async () => {
+    try { await fetch('/logout.php', { method: 'POST' }); } catch {}
+    localStorage.removeItem('chat_user');
+    localStorage.removeItem('chat_token');
+    onLogout?.();                                // ← вызывает
+  };
   const withoutMe = users.filter(
     user => String(user.id) !== String(currentUser?.id)
   );

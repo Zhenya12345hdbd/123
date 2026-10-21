@@ -22,7 +22,6 @@ export function useWebSocket({
         JSON.stringify({
           type: 'mark_all_read',
           room_id: roomId,
-          user_id: currentUser.id,
         })
       );
     };
@@ -41,11 +40,12 @@ export function useWebSocket({
     };
 
     socket.onopen = () => {
-      setIsConnected(true);
-      socket.send(
-        JSON.stringify({ type: 'auth', user_id: currentUser.id })
-      );
-    };
+  setIsConnected(true);
+  socket.send(JSON.stringify({
+    type: 'auth',
+    token: localStorage.getItem('chat_token') || '',
+  }));
+};
 
     socket.onmessage = (event) => {
       let data;

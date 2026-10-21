@@ -1,6 +1,8 @@
 <?php
 require 'vendor/autoload.php';
 require 'db.php';
+require 'auth.php';
+$me = requireAuth();
 
 header('Content-Type: application/json');
 

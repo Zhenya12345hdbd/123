@@ -1,5 +1,7 @@
 <?php
 require 'db.php';
+require 'auth.php';
+$me = requireAuth();
 
 $names = [
   ['Иван','Сидоров'], ['Анна','Кузнецова'], ['Сергей','Морозов'],

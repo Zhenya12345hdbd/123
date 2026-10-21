@@ -8,10 +8,10 @@ const LoginForm = ({ onAuthSuccess }) => {
     lastName: '',
     password: '',
   });
-  const [selectedFile, setSelectedFile] = useState(null); // Храним файл
+  const [selectedFile, setSelectedFile] = useState(null);
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [mode, setMode] = useState('login'); // По умолчанию вход
+  const [mode, setMode] = useState('login');
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -29,10 +29,9 @@ const LoginForm = ({ onAuthSuccess }) => {
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      // Проверка типа файла прямо в браузере
       if (!file.type.startsWith('image/')) {
         setError('Пожалуйста, выберите изображение (JPG, PNG и т.д.)');
-        e.target.value = ''; // Сброс инпута
+        e.target.value = '';
         return;
       }
       setSelectedFile(file);
@@ -45,7 +44,7 @@ const LoginForm = ({ onAuthSuccess }) => {
     setIsSubmitting(true);
     setError('');
 
-    // --- ЛОГИКА РЕГИСТРАЦИИ ---
+    // --- РЕГИСТРАЦИЯ ---
     if (mode === 'register') {
       if (!formData.firstName.trim() || !formData.lastName.trim() || !formData.password.trim()) {
         setError('Заполните имя, фамилию и пароль.');
@@ -68,19 +67,21 @@ const LoginForm = ({ onAuthSuccess }) => {
       try {
         const response = await fetch('register.php', {
           method: 'POST',
-          body: formDataObj, 
+          body: formDataObj,
         });
 
         const result = await response.json();
 
-        if (result.success) {
-          // ВАЖНО: Приводим к единому формату для родителя
+        if (response.ok || result.success) {
+          // Токен регистрация не выдаёт (нет сессии). Сохраняем пустой — не мешает.
+          localStorage.setItem('chat_token', result.token || '');
+
           onAuthSuccess({
             id: result.id,
-            first_name: result.firstName || formData.firstName, // Лучше брать из БД, но fallback есть
-            last_name: result.lastName || formData.lastName,
-            avatar_path: result.avatar_path, // Теперь везде avatar_path
-            username: `${result.firstName} ${result.lastName}`
+            first_name: result.first_name || formData.firstName,
+            last_name: result.last_name || formData.lastName,
+            avatar_path: result.avatar_path,
+            username: `${result.first_name || formData.firstName} ${result.last_name || formData.lastName}`,
           });
         } else {
           throw new Error(result.error || 'Ошибка регистрации');
@@ -93,7 +94,7 @@ const LoginForm = ({ onAuthSuccess }) => {
       return;
     }
 
-    // --- ЛОГИКА ВХОДА ---
+    // --- ВХОД ---
     const fullName = `${formData.firstName} ${formData.lastName}`.trim();
     if (!fullName || !formData.password.trim()) {
       setError('Введите имя/фамилию и пароль.');
@@ -116,13 +117,16 @@ const LoginForm = ({ onAuthSuccess }) => {
       const result = await response.json();
 
       if (response.ok || result.success) {
-        // ВАЖНО: Унифицируем поля здесь тоже
+        // 1) сохраняем токен для WS
+        localStorage.setItem('chat_token', result.token || '');
+
+        // 2) единый формат (snake_case, как в login.php)
         onAuthSuccess({
           id: result.id,
-          first_name: result.firstName, 
-          last_name: result.lastName,
-          avatar_path: result.avatar_path, // Ключевое поле для Sidebar
-          username: result.username
+          first_name: result.first_name,
+          last_name: result.last_name,
+          avatar_path: result.avatar_path,
+          username: `${result.first_name} ${result.last_name}`,
         });
       } else {
         throw new Error(result.error || 'Неверный логин или пароль');
@@ -179,7 +183,6 @@ const LoginForm = ({ onAuthSuccess }) => {
         />
       </div>
 
-      {/* Поле загрузки только в режиме регистрации */}
       {mode === 'register' && (
         <div className="input-group">
           <label htmlFor="avatar">Аватар</label>
@@ -227,7 +230,6 @@ const LoginForm = ({ onAuthSuccess }) => {
           </>
         )}
       </p>
-                
     </form>
   );
 };

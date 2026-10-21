@@ -111,7 +111,6 @@ function Main({ onLogout }) {
     const ok = send({
       type: 'message',
       text,
-      from: currentUser.id,
       room_id: activeRoomId,
     });
     if (!ok) alert('Сервер не подключен!');

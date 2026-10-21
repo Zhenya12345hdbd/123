@@ -2,6 +2,7 @@
 require 'vendor/autoload.php';
 require 'db.php';
 
+
 use Ratchet\MessageComponentInterface;
 use Ratchet\ConnectionInterface;
 use Ratchet\WebSocket\WsServer;
@@ -42,31 +43,25 @@ class Chat implements MessageComponentInterface {
 
         // --- Авторизация ---
         if (($data['type'] ?? '') === 'auth') {
-            $user_id = (int)($data['user_id'] ?? 0);
+            error_log("WS AUTH TOKEN: " . ($data['token'] ?? 'ПУСТО'));
+    $token = trim($data['token'] ?? '');
+    if ($token === '') { $from->close(); return; }
 
-            if ($user_id > 0) {
-                $stmt = $this->pdo->prepare(
-                    "SELECT first_name, last_name, avatar_path FROM users WHERE id = ?"
-                );
-                $stmt->execute([$user_id]);
-                $user = $stmt->fetch(PDO::FETCH_ASSOC);
+    $stmt = $this->pdo->prepare("SELECT id, first_name, last_name, avatar_path FROM users WHERE token = ?");
+    $stmt->execute([$token]);
+    $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-                if ($user) {
-                    $from->user_id     = $user_id;
-                    $from->username    = $user['first_name'] . ' ' . $user['last_name'];
-                    $from->avatar_path = $user['avatar_path'];
-                    $this->users[$user_id] = $from;
+    if (!$user) { $from->close(); return; }
 
-                    $from->send(json_encode([
-                        'type'     => 'auth_ok',
-                        'username' => $from->username,
-                    ]));
+    $from->user_id     = (int)$user['id'];
+    $from->username    = $user['first_name'].' '.$user['last_name'];
+    $from->avatar_path = $user['avatar_path'];
+    $this->users[$from->user_id] = $from;
 
-                    $this->broadcastStatus($user_id, true, $from);
-                }
-            }
-            return;
-        }
+    $from->send(json_encode(['type'=>'auth_ok','username'=>$from->username]));
+    $this->broadcastStatus($from->user_id, true, $from);
+    return;
+}
 
         // === ТЕКСТОВОЕ СООБЩЕНИЕ ===
         if (($data['type'] ?? '') === 'message' && isset($data['room_id'])) {
@@ -339,7 +334,7 @@ class Chat implements MessageComponentInterface {
         // === ОБРАБОТКА "ПРОЧИТАНО" ===
         if (($data['type'] ?? '') === 'mark_all_read') {
             $room_id = (int)($data['room_id'] ?? 0);
-            $user_id = (int)($data['user_id'] ?? 0);
+            $user_id = (int)$from->user_id;
 
             if (!$room_id || !$user_id || !$from->user_id) {
                 return;
