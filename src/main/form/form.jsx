@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import './form.css';
 import '../main.css';
+import { API } from '../../config';
+import { USE_MOCK } from '../../config';
+import { request } from '../api/request';
 
 const LoginForm = ({ onAuthSuccess }) => {
   const [formData, setFormData] = useState({
@@ -12,6 +15,8 @@ const LoginForm = ({ onAuthSuccess }) => {
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [mode, setMode] = useState('login');
+  const [captcha, setCaptcha] = useState('');
+  const [captchaKey, setCaptchaKey] = useState(Date.now());
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -24,6 +29,8 @@ const LoginForm = ({ onAuthSuccess }) => {
     setError('');
     setFormData({ firstName: '', lastName: '', password: '' });
     setSelectedFile(null);
+    setCaptcha('');
+    setCaptchaKey(Date.now());
   };
 
   const handleFileChange = (e) => {
@@ -58,22 +65,27 @@ const LoginForm = ({ onAuthSuccess }) => {
         return;
       }
 
+      // в мок-режиме капчу не требуем (картинки нет)
+      if (!USE_MOCK && !captcha.trim()) {
+        setError('Введите код с картинки.');
+        setIsSubmitting(false);
+        return;
+      }
+
       const formDataObj = new FormData();
       formDataObj.append('firstName', formData.firstName);
       formDataObj.append('lastName', formData.lastName);
       formDataObj.append('password', formData.password);
       formDataObj.append('avatar', selectedFile);
+      if (!USE_MOCK) formDataObj.append('captcha', captcha.trim());
 
       try {
-        const response = await fetch('register.php', {
+        const result = await request(API.register, {
           method: 'POST',
           body: formDataObj,
         });
 
-        const result = await response.json();
-
-        if (response.ok || result.success) {
-          // Токен регистрация не выдаёт (нет сессии). Сохраняем пустой — не мешает.
+        if (result.success) {
           localStorage.setItem('chat_token', result.token || '');
 
           onAuthSuccess({
@@ -88,6 +100,8 @@ const LoginForm = ({ onAuthSuccess }) => {
         }
       } catch (err) {
         setError(err.message);
+        setCaptchaKey(Date.now());
+        setCaptcha('');
       } finally {
         setIsSubmitting(false);
       }
@@ -108,19 +122,15 @@ const LoginForm = ({ onAuthSuccess }) => {
     };
 
     try {
-      const response = await fetch('login.php', {
+      const result = await request(API.login, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
 
-      const result = await response.json();
-
-      if (response.ok || result.success) {
-        // 1) сохраняем токен для WS
+      if (result.success) {
         localStorage.setItem('chat_token', result.token || '');
 
-        // 2) единый формат (snake_case, как в login.php)
         onAuthSuccess({
           id: result.id,
           first_name: result.first_name,
@@ -140,7 +150,7 @@ const LoginForm = ({ onAuthSuccess }) => {
 
   return (
     <form onSubmit={handleSubmit} className="login-form">
-      <h2>{mode === 'register' ? 'Регистрация' : 'Вход'}</h2>
+      <h2 >{mode === 'register' ? 'Регистрация' : 'Вход'}</h2>
 
       {error && <p className="error-message">{error}</p>}
 
@@ -148,6 +158,7 @@ const LoginForm = ({ onAuthSuccess }) => {
         <label htmlFor="firstName">{mode === 'register' ? 'Имя' : 'Ваше имя'}</label>
         <input
           type="text"
+          className='form_for_input'
           id="firstName"
           name="firstName"
           value={formData.firstName}
@@ -161,6 +172,7 @@ const LoginForm = ({ onAuthSuccess }) => {
         <label htmlFor="lastName">{mode === 'register' ? 'Фамилия' : 'Ваша фамилия'}</label>
         <input
           type="text"
+          className='form_for_input'
           id="lastName"
           name="lastName"
           value={formData.lastName}
@@ -175,6 +187,7 @@ const LoginForm = ({ onAuthSuccess }) => {
         <input
           type={mode === 'register' ? 'text' : 'password'}
           id="password"
+          className='form_for_input'
           name="password"
           value={formData.password}
           onChange={handleChange}
@@ -182,6 +195,48 @@ const LoginForm = ({ onAuthSuccess }) => {
           required
         />
       </div>
+
+      {mode === 'register' && (
+        <div className="input-group">
+          <label>Капча</label>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {USE_MOCK ? (
+              <div style={{
+                border: '1px dashed #999', borderRadius: 4, height: 60, width: 160,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 12, color: '#666', background: '#f5f5f5',
+              }}>
+                Капча (мок)
+              </div>
+            ) : (
+              <img
+                src={`${API.captcha}?t=${captchaKey}`}
+                alt="Капча"
+                style={{ border: '1px solid #ccc', borderRadius: 4, height: 60 }}
+                onClick={() => setCaptchaKey(Date.now())}
+                title="Нажмите, чтобы обновить"
+              />
+            )}
+            <button
+              type="button"
+              onClick={() => setCaptchaKey(Date.now())}
+              style={{ fontSize: 12 }}
+            >
+              Обновить
+            </button>
+          </div>
+          <input
+            type="text"
+            value={captcha}
+            onChange={(e) => setCaptcha(e.target.value)}
+            placeholder={USE_MOCK ? 'В мок-режиме не нужно' : 'Введите код с картинки'}
+            required={!USE_MOCK}
+            maxLength={5}
+            style={{ marginTop: 8 }}
+            disabled={USE_MOCK}
+          />
+        </div>
+      )}
 
       {mode === 'register' && (
         <div className="input-group">

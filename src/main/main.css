@@ -133,6 +133,7 @@ letter-spacing: 0px;
 text-transform: uppercase;
 }
 
+
 .list{
     display: flex;
     flex-direction: column;

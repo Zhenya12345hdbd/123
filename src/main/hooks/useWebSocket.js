@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
+import { USE_MOCK } from '../../config';
+import { WS_URL } from '../../config';
 
 export function useWebSocket({
   currentUser,
@@ -13,8 +15,33 @@ export function useWebSocket({
   useEffect(() => {
     if (!currentUser) return;
 
-    const socket = new WebSocket('ws://localhost:8081');
-    
+    // === МОК: без реального сокета ===
+    if (USE_MOCK) {
+      setIsConnected(true);
+
+      // через 3 секунды «прилетает» новое сообщение — проверить рендер
+      const t = setTimeout(() => {
+        onMessage({
+          id: Date.now(),
+          type: 'message',
+          from: 11,
+          room_id: activeRoomIdRef.current || 1,
+          username: 'Маша Машина',
+          text: 'Мок-сообщение в реальном времени',
+          time: new Date().toLocaleTimeString('ru-RU', {
+            hour: '2-digit',
+            minute: '2-digit',
+          }),
+          is_read: 0,
+          avatar_path: null,
+        });
+      }, 3000);
+
+      return () => clearTimeout(t);
+    }
+
+    // === РЕАЛЬНЫЙ WS ===
+    const socket = new WebSocket(WS_URL);
     socketRef.current = socket;
 
     const markRead = (roomId) => {
@@ -40,12 +67,14 @@ export function useWebSocket({
     };
 
     socket.onopen = () => {
-  setIsConnected(true);
-  socket.send(JSON.stringify({
-    type: 'auth',
-    token: localStorage.getItem('chat_token') || '',
-  }));
-};
+      setIsConnected(true);
+      socket.send(
+        JSON.stringify({
+          type: 'auth',
+          token: localStorage.getItem('chat_token') || '',
+        })
+      );
+    };
 
     socket.onmessage = (event) => {
       let data;
@@ -97,6 +126,29 @@ export function useWebSocket({
   }, [currentUser]);
 
   const send = (payload) => {
+    // === МОК: локальное «эхо» ===
+    if (USE_MOCK) {
+      if (payload.type === 'message' && payload.text) {
+        onMessage({
+          id: Date.now(),
+          type: 'message',
+          from: currentUser.id,
+          room_id: payload.room_id,
+          username: `${currentUser.first_name} ${currentUser.last_name}`,
+          text: payload.text,
+          time: new Date().toLocaleTimeString('ru-RU', {
+            hour: '2-digit',
+            minute: '2-digit',
+          }),
+          is_read: 0,
+          avatar_path: currentUser.avatar_path,
+        });
+      }
+      // mark_all_read в моке просто игнорируем
+      return true;
+    }
+
+    // === РЕАЛЬНЫЙ WS ===
     const socket = socketRef.current;
     if (socket && socket.readyState === WebSocket.OPEN) {
       socket.send(JSON.stringify(payload));

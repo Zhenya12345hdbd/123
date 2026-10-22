@@ -3,13 +3,20 @@ import settings from '../image/settings.png';
 // Убедись, что пути к картинкам верные. Если photo_user.avif нет, используй заглушку или удали эту строку
 import userPlaceholder from '../image/photo_user.avif'; 
 
+import { API } from '../../config';
+import { request } from '../api/request';
+
 function Sidebar({ onLogout, users, onlineUsers, currentUser, onClientClick, activeChatId, unreadCounts }) {
   const handleLogout = async () => {
-    try { await fetch('/logout.php', { method: 'POST' }); } catch {}
-    localStorage.removeItem('chat_user');
-    localStorage.removeItem('chat_token');
-    onLogout?.();                                // ← вызывает
-  };
+  try {
+    await request(API.logout, { method: 'POST' });
+  } catch (e) {
+    console.error('logout error', e);
+  }
+  localStorage.removeItem('chat_user');
+  localStorage.removeItem('chat_token');
+  onLogout?.();
+};
   const withoutMe = users.filter(
     user => String(user.id) !== String(currentUser?.id)
   );

@@ -19,7 +19,8 @@ function App() {
 
   const handleLogout = () => {
     localStorage.removeItem('chat_user');
-    setCurrentUser(null);
+    localStorage.removeItem('chat_token');
+    setCurrentUser(null);           // ← ЭТО размонтирует Main
   };
   
 
