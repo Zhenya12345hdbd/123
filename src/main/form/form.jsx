@@ -150,12 +150,12 @@ const LoginForm = ({ onAuthSuccess }) => {
 
   return (
     <form onSubmit={handleSubmit} className="login-form">
-      <h2 >{mode === 'register' ? 'Регистрация' : 'Вход'}</h2>
+      <h2 className='text_regist'>{mode === 'register' ? 'Регистрация' : 'Вход'}</h2>
 
       {error && <p className="error-message">{error}</p>}
 
       <div className="input-group">
-        <label htmlFor="firstName">{mode === 'register' ? 'Имя' : 'Ваше имя'}</label>
+        <label >{mode === 'register' ? 'Имя' : 'Ваше имя'}</label>
         <input
           type="text"
           className='form_for_input'
@@ -169,7 +169,7 @@ const LoginForm = ({ onAuthSuccess }) => {
       </div>
 
       <div className="input-group">
-        <label htmlFor="lastName">{mode === 'register' ? 'Фамилия' : 'Ваша фамилия'}</label>
+        <label >{mode === 'register' ? 'Фамилия' : 'Ваша фамилия'}</label>
         <input
           type="text"
           className='form_for_input'
@@ -183,7 +183,7 @@ const LoginForm = ({ onAuthSuccess }) => {
       </div>
 
       <div className="input-group">
-        <label htmlFor="password">Пароль</label>
+        <label >Пароль</label>
         <input
           type={mode === 'register' ? 'text' : 'password'}
           id="password"
@@ -196,16 +196,31 @@ const LoginForm = ({ onAuthSuccess }) => {
         />
       </div>
 
+      
+
       {mode === 'register' && (
         <div className="input-group">
-          <label>Капча</label>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <label htmlFor="avatar">Аватар</label>
+          <input
+            type="file"
+            id="avatar"
+            accept="image/*"
+            onChange={handleFileChange}
+            required
+          />
+          {selectedFile && (
+            <p style={{ fontSize: '12px', color: '#666', marginTop: '5px' }}>
+              Выбран: {selectedFile.name}
+            </p>
+          )}
+        </div>
+      )}
+      {mode === 'register' && (
+        <div className=" capcha">
+          <label>введите цифры с картинки</label>
+          <div className='capcha_div'>
             {USE_MOCK ? (
-              <div style={{
-                border: '1px dashed #999', borderRadius: 4, height: 60, width: 160,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 12, color: '#666', background: '#f5f5f5',
-              }}>
+              <div className='capcha_img'>
                 Капча (мок)
               </div>
             ) : (
@@ -238,25 +253,7 @@ const LoginForm = ({ onAuthSuccess }) => {
         </div>
       )}
 
-      {mode === 'register' && (
-        <div className="input-group">
-          <label htmlFor="avatar">Аватар</label>
-          <input
-            type="file"
-            id="avatar"
-            accept="image/*"
-            onChange={handleFileChange}
-            required
-          />
-          {selectedFile && (
-            <p style={{ fontSize: '12px', color: '#666', marginTop: '5px' }}>
-              Выбран: {selectedFile.name}
-            </p>
-          )}
-        </div>
-      )}
-
-      <button type="submit" disabled={isSubmitting}>
+      <button type="submit" className='button_registr' disabled={isSubmitting}>
         {isSubmitting ? 'Обработка...' : mode === 'register' ? 'Зарегистрироваться' : 'Войти'}
       </button>
 
