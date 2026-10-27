@@ -165,6 +165,9 @@ text-transform: uppercase;
 }
 .delete{
     display: flex;
+    width: 30px;
+    align-items: center;
+    justify-content: center;
 }
 .delete img{
  width: 15px;
