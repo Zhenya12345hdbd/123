@@ -1,35 +1,60 @@
+import { useState, useEffect } from 'react';
 import '../main.css';
 import settings from '../image/settings.png';
-// Убедись, что пути к картинкам верные. Если photo_user.avif нет, используй заглушку или удали эту строку
-import userPlaceholder from '../image/photo_user.avif'; 
+import userPlaceholder from '../image/photo_user.avif';
+import { fetchFriends } from '../api/users';
+import delet from '../image/delete.png'
 
-import { API } from '../../config';
-import { request } from '../api/request';
+function Sidebar({
+  onLogout,
+  onlineUsers,
+  currentUser,
+  onClientClick,
+  activeChatId,
+  unreadCounts,
+}) {
+  const [friends, setFriends] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
 
-function Sidebar({ onLogout, users, onlineUsers, currentUser, onClientClick, activeChatId, unreadCounts }) {
+  // Загружаем друзей при монтировании
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const data = await fetchFriends();
+        if (!cancelled) setFriends(data);
+      } catch (err) {
+        console.error('Ошибка загрузки друзей:', err);
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  // Локальный поиск по друзьям (быстрый)
+  const filteredFriends = friends.filter((user) => {
+    const fullName = `${user.first_name} ${user.last_name}`.toLowerCase();
+    return fullName.includes(searchTerm.toLowerCase());
+  });
+
+  // Сортировка (онлайн сверху)
+  const sortedFriends = [...filteredFriends].sort((a, b) => {
+    const aOnline = onlineUsers.some((id) => String(id) === String(a.id));
+    const bOnline = onlineUsers.some((id) => String(id) === String(b.id));
+    if (aOnline !== bOnline) return aOnline ? -1 : 1;
+    const aName = `${a.first_name} ${a.last_name}`.toLowerCase();
+    const bName = `${b.first_name} ${b.last_name}`.toLowerCase();
+    return aName.localeCompare(bName, 'ru');
+  });
+
   const handleLogout = async () => {
-  try {
-    await request(API.logout, { method: 'POST' });
-  } catch (e) {
-    console.error('logout error', e);
-  }
-  localStorage.removeItem('chat_user');
-  localStorage.removeItem('chat_token');
-  onLogout?.();
-};
-  const withoutMe = users.filter(
-    user => String(user.id) !== String(currentUser?.id)
-  );
-  const sortedUsers = [...withoutMe].sort((a, b) => {
-  const aOnline = onlineUsers.some(id => String(id) === String(a.id));
-  const bOnline = onlineUsers.some(id => String(id) === String(b.id));
-
-  if (aOnline !== bOnline) return aOnline ? -1 : 1; // онлайн выше
-
-  const aName = `${a.first_name} ${a.last_name}`.toLowerCase();
-  const bName = `${b.first_name} ${b.last_name}`.toLowerCase();
-  return aName.localeCompare(bName, 'ru');
-});
+    try { await fetch('/logout.php', { method: 'POST' }); } catch (e) { console.error(e); }
+    localStorage.removeItem('chat_user');
+    localStorage.removeItem('chat_token');
+    onLogout?.();
+  };
 
   return (
     <div className="main_small">
@@ -39,59 +64,53 @@ function Sidebar({ onLogout, users, onlineUsers, currentUser, onClientClick, act
       </div>
 
       <div className="user_card">
-        {/* Добавь проверку на наличие аватара, чтобы не было битой картинки */}
-        <img 
-          src={currentUser.avatar_path || userPlaceholder} 
-          className="main_user_card" 
-          alt="Current User" 
-          
-        />
+        <img src={currentUser.avatar_path || userPlaceholder} className="main_user_card" alt="Current User" />
         <div className="user_name">
-          <p className="name_full">
-            {currentUser.first_name} {currentUser.last_name}
-          </p>
-          <button onClick={onLogout} className="button_exit">
-            Выйти
-          </button>
+          <p className="name_full">{currentUser.first_name} {currentUser.last_name}</p>
+          <button onClick={handleLogout} className="button_exit">Выйти</button>
         </div>
       </div>
 
       <div className="friends">
         <div className="friends_num">
-          <h1>Users</h1>
-          <h1>{users.length}</h1>
+          <h1>Friends</h1>
+          <h1>{friends.length}</h1>
+        </div>
+
+        <div className="search_user_div">
+          <input
+            type="text"
+            className="search_user_input"
+            placeholder="Поиск по друзьям..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
         </div>
 
         <div className="list">
-          {users.length === 0 ? (
+          {isLoading ? (
             <p style={{ color: '#888', textAlign: 'center' }}>Загрузка...</p>
+          ) : sortedFriends.length === 0 ? (
+            <p style={{ color: '#888', textAlign: 'center', fontSize: 12 }}>
+              {searchTerm ? 'Не найдено' : 'Нет друзей'}
+            </p>
           ) : (
-            sortedUsers.map((u) => {
-              const isUserOnline = onlineUsers.some(id => String(id) === String(u.id));
+            sortedFriends.map((u) => {
+              const isUserOnline = onlineUsers.some((id) => String(id) === String(u.id));
               const isActive = String(u.id) === String(activeChatId);
-              
-              // Получаем количество непрочитанных для этого пользователя
               const count = unreadCounts[u.id] || 0;
-              
-              // ГЛАВНОЕ ИСПРАВЛЕНИЕ: onClick здесь!
+
               return (
-                <div 
-                  key={u.id} 
-                  className="user_page"
-                  onClick={() => onClientClick(u.id, `${u.first_name} ${u.last_name}`)}
-                  style={{ cursor: 'pointer', padding: '8px', borderRadius: '8px' }}
+                <div
+                  key={u.id}
+                  className={`user_page ${isActive ? 'user_page_active' : ''}`}
                 >
-                  <div className={`tochka ${isUserOnline ? 'online' : 'offline'}`}>
-                  </div>
-                  
-                  <img 
-                    src={u.avatar_path || userPlaceholder} 
-                    className="photo_user" 
-                    alt={`${u.first_name}`} 
-                  />
-                  
+                  <div className={`tochka ${isUserOnline ? 'online' : 'offline'}`} />
+                  <img src={u.avatar_path || userPlaceholder} className="photo_user" alt={u.first_name} />
                   <div className="user_info">
-                    <p className="name_full">{u.first_name} {u.last_name}</p> <div className='entered_message'>{count > 0 ? count : ''}</div>
+                    <p className="name_full" onClick={() => onClientClick(u.id, `${u.first_name} ${u.last_name}`)}>{u.first_name} {u.last_name}</p>
+                    <div className='delete'><img src={delet}/></div>
+                    <div className="entered_message">{count > 0 ? count : ''}</div>
                   </div>
                 </div>
               );

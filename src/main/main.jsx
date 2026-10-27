@@ -32,8 +32,7 @@ function Main({ onLogout }) {
     () => JSON.parse(localStorage.getItem('chat_user') || 'null'),
     []
   );
-
-  const { users } = useUsers();
+const { users, searchResults, isSearching, search, clearSearch } = useUsers();
   const { unreadCounts, clearForUser, incrementForUser } =
     useUnreadCounts(currentUser);
 
@@ -151,7 +150,6 @@ function Main({ onLogout }) {
     <div className="main">
       <Sidebar
         onLogout={onLogout}
-        users={users}
         onlineUsers={onlineUsers}
         currentUser={currentUser}
         onClientClick={handleClientClick}
@@ -160,10 +158,15 @@ function Main({ onLogout }) {
       />
 
       <div className="main_big">
-        <ChatHeader
-          title={activeRoomId ? activeChatName : 'Выберите собеседника'}
-          isConnected={isConnected}
-        />
+      <ChatHeader
+        title={activeRoomId ? activeChatName : 'Выберите собеседника'}
+        isConnected={isConnected}
+        onSearch={search}
+        searchResults={searchResults}
+        isSearching={isSearching}
+        onClientClick={handleClientClick}
+        clearSearch={clearSearch}
+      />
 
         <MessageList
           messages={messages}

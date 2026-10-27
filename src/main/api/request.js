@@ -9,25 +9,42 @@ import {
   MOCK_REGISTER,
   MOCK_CREATE_ROOM,
   MOCK_UPLOAD,
+  MOCK_FRIENDS
 } from './mock';
 
-// небольшая задержка, чтобы UI показал «загрузку» (как в реальности)
 const delay = (ms) => new Promise((r) => setTimeout(r, ms));
 
 export async function request(url, options = {}) {
   if (!USE_MOCK) {
     const res = await fetch(url, { credentials: 'include', ...options });
     const data = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      throw new Error(data.error || `HTTP ${res.status}`);
-    }
+    if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
     return data;
   }
 
-  // === МОК ===
-  await delay(150); // имитация сети
+  await delay(150);
 
-  if (url.includes('get_users.php'))         return MOCK_USERS;
+  // --- 1. Обработка пользователей (с поиском) ---
+  if (url.includes('get_users.php')) {
+    // Отделяем query-строку от пути
+    const queryString = url.split('?')[1] || '';
+    const params = new URLSearchParams(queryString);
+    const search = (params.get('search') || '').trim().toLowerCase();
+
+    if (search) {
+      console.log(`[MOCK] Поиск пользователей по: "${search}"`);
+      const filtered = MOCK_USERS.filter(u => {
+        const fullName = `${u.first_name} ${u.last_name}`.toLowerCase();
+        return fullName.includes(search);
+      });
+      console.log('[MOCK] Найдено:', filtered.length);
+      return filtered;
+    }
+    return MOCK_USERS;
+  }
+  if (url.includes('get_friends.php')) return MOCK_FRIENDS;
+
+  // --- 2. Остальные эндпоинты ---
   if (url.includes('get_unread_counts.php')) return MOCK_UNREAD;
   if (url.includes('get_history.php'))       return MOCK_HISTORY;
   if (url.includes('create_room.php'))       return MOCK_CREATE_ROOM;

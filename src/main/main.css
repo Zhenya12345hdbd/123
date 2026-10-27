@@ -92,7 +92,7 @@ cursor: pointer;
     position: absolute;
     width: 3px;
     top: 6px;
-    right: 13px;
+    left:65px;
     font-size: 8px;
     color: red;
 
@@ -123,6 +123,7 @@ cursor: pointer;
 
 .button_exit:hover{
     background-color: red;
+    box-shadow: 0 0px 15px #d9534f;
 }
 .friends h1{
     color: #919191;
@@ -139,7 +140,7 @@ text-transform: uppercase;
     flex-direction: column;
     margin-top: 20px;
     gap: 10px;
-    height: 538px;
+    height: 464px;
     overflow-y: scroll;
 }
 .list::-webkit-scrollbar {
@@ -156,17 +157,46 @@ text-transform: uppercase;
     display: flex;
     flex-direction: row;
     align-items: center;
-    gap: 10px;
+    justify-content: space-between;
     position: relative;
+    padding: 8px;
+    border-radius: 8px; 
 
 }
+.delete{
+    display: flex;
+}
+.delete img{
+ width: 15px;
+ cursor: pointer;
+ transition: width 0.3s ease;
+ align-self: center;
+}
+.delete img:hover{
+ width: 25px;
+ cursor: pointer;
+ 
+}
+
+
+.user_info{
+    display: flex;
+    width: 160px;
+    flex-direction: row;
+    height: 30px;
+    justify-content: space-between;
+    align-items: center;
+}
+
 .user_page p{
     color: #B5B5B5;
+    width: 136px;
 font-weight: 400;
 font-size: 14px;
 line-height: 100%;
 letter-spacing: 0px;
 cursor: pointer;
+
 
 
 
@@ -779,4 +809,80 @@ padding-bottom: 10px;
     
     position: relative;
     
+}
+
+
+.search_user_div {
+  margin-top: 15px;
+  margin-bottom: 10px;
+  padding: 0 10px;
+}
+
+.search_user_input {
+  width: 100%;
+  padding: 8px 12px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.3s ease;
+}
+
+.search_user_input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.search_user_input:focus {
+ border: 1px solid red; /* Зеленоватая рамка при фокусе */
+  box-shadow: 0 0px 15px #d9534f;
+}
+
+/* Подсветка активного пользователя (если нужно) */
+.user_page_active {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+
+
+
+.search_results_dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  background: #2b2b2b;
+  border: 1px solid #444;
+  border-radius: 0 0 6px 6px;
+  z-index: 1000;
+  max-height: 250px;
+  overflow-y: auto;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+}
+
+.search_result_item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 15px;
+  color: white;
+  cursor: pointer;
+  font-size: 14px;
+  border-bottom: 1px solid #333;
+}
+
+.search_result_item:last-child {
+  border-bottom: none;
+}
+
+.search_result_item:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.search_result_avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  object-fit: cover;
 }

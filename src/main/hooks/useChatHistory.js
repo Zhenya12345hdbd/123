@@ -8,7 +8,6 @@ export function useChatHistory(currentUser) {
 
   const roomIdRef = useRef(null);
   const loadingRef = useRef(false);
-  // ref на сообщения, чтобы loadOlder не зависел от messages
   const messagesRef = useRef([]);
 
   const updateMessages = useCallback((updater) => {
@@ -32,7 +31,7 @@ export function useChatHistory(currentUser) {
 
   const appendMessage = useCallback((msg) => {
     updateMessages((prev) => {
-      if (prev.some((m) => m.id === msg.id)) return prev;
+      if (prev.some((m) => m.id === msg.id)) return prev; // защита от дублей
       return [...prev, msg];
     });
   }, [updateMessages]);
@@ -56,10 +55,9 @@ export function useChatHistory(currentUser) {
     setIsLoadingMore(true);
 
     try {
-      const data = await fetchHistory(roomId, currentUser.id, {
-        beforeId,
-        limit: 10,
-      });
+      // ВАЖНО: новый формат fetchHistory(roomId, { beforeId, limit })
+      // Без currentUser.id!
+      const data = await fetchHistory(roomId, { beforeId, limit: 10 });
 
       updateMessages((prev) => {
         const existing = new Set(prev.map((m) => m.id));
@@ -73,7 +71,7 @@ export function useChatHistory(currentUser) {
       loadingRef.current = false;
       setIsLoadingMore(false);
     }
-  }, [hasMore, currentUser, updateMessages]);
+  }, [hasMore, updateMessages]);
 
   return {
     messages,

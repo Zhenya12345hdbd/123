@@ -20,6 +20,7 @@
   border: 1px solid gray;
   outline: none;
   color : gray;
+  border-radius: 6px;
 }
 .form_for_input:hover{
   border: 1px solid red;
@@ -70,19 +71,15 @@
 .button_registr{
   align-self: center;
   display: block;
-
   padding:5px 10px;
   background-color: #888;
   border-radius: 3px;
 }
-.button_registr{
-  align-self: center;
-  
-
-  padding:5px 10px;
-  background-color: #888;
-  border-radius: 3px;
+.button_registr:hover{
+  background-color: red;
+  box-shadow: 0 0px 15px #d9534f;
 }
+
 .button_registr:active{
   background-color: red;
   box-shadow: 0 0px 15px #d9534f;
