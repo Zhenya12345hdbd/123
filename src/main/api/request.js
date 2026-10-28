@@ -42,6 +42,16 @@ export async function request(url, options = {}) {
     }
     return MOCK_USERS;
   }
+  if (url.includes('remove_friend.php')) {
+  console.log('[MOCK] Удаление друга');
+  // В реальном моке можно было бы удалять из массива MOCK_FRIENDS,
+  // но для простоты просто возвращаем успех.
+  return { success: true };
+}
+if (url.includes('add_friend.php')) {
+  console.log('[MOCK] Добавление друга:', options.body);
+  return { success: true };
+}
   if (url.includes('get_friends.php')) return MOCK_FRIENDS;
 
   // --- 2. Остальные эндпоинты ---

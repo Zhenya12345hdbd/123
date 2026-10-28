@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import '../main.css';
 import settings from '../image/settings.png';
 import userPlaceholder from '../image/photo_user.avif';
-import { fetchFriends } from '../api/users';
+import { fetchFriends, removeFriend } from '../api/users';
 import delet from '../image/delete.png'
 
 function Sidebar({
@@ -32,6 +32,27 @@ function Sidebar({
     })();
     return () => { cancelled = true; };
   }, []);
+
+  const handleRemoveFriend = async (e, friendId, first_name, last_name ) => {
+    e.stopPropagation(); // Чтобы клик по крестику не открывал чат
+    
+    if (!window.confirm(`удалить ${first_name} ${last_name} из друзей?`)) return;
+
+    // Оптимистичное обновление: убираем из UI сразу
+    setFriends(prev => prev.filter(f => f.id !== friendId));
+
+    try {
+      await removeFriend(friendId);
+    } catch (err) {
+      console.error('Ошибка удаления друга:', err);
+      alert('Не удалось удалить друга');
+      // Если ошибка, возвращаем обратно (загружаем заново)
+      try {
+        const data = await fetchFriends();
+        setFriends(data);
+      } catch (e) {}
+    }
+  };
 
   // Локальный поиск по друзьям (быстрый)
   const filteredFriends = friends.filter((user) => {
@@ -109,7 +130,7 @@ function Sidebar({
                   <img src={u.avatar_path || userPlaceholder} className="photo_user" alt={u.first_name} />
                   <div className="user_info">
                     <p className="name_full" onClick={() => onClientClick(u.id, `${u.first_name} ${u.last_name}`)}>{u.first_name} {u.last_name}</p>
-                    <div className='delete'><img src={delet}/></div>
+                    <div className='delete'><img src={delet} onClick={(e) => handleRemoveFriend(e, u.id, u.first_name, u.last_name)}/></div>
                     <div className="entered_message">{count > 0 ? count : ''}</div>
                   </div>
                 </div>

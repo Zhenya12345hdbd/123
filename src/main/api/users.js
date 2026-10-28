@@ -18,3 +18,17 @@ export async function fetchUnreadCounts() {
 export async function fetchFriends() {
   return request(`${API.base}/get_friends.php?t=${Date.now()}`);
 }
+export async function removeFriend(friendId) {
+  return request(`${API.base}/remove_friend.php`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ friend_id: friendId }),
+  });
+}
+export async function addFriend(friendId) {
+  return request(`${API.base}/add_friend.php`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ friend_id: friendId }),
+  });
+}

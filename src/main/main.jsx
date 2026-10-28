@@ -13,6 +13,8 @@ import { useWebSocket } from './hooks/useWebSocket';
 import { usePendingFiles } from './hooks/usePendingFiles';
 import { useChatRooms } from './hooks/useChatRooms';
 import { useChatHistory } from './hooks/useChatHistory';
+import { useFriends } from './hooks/useFriends';
+import { addFriend } from './api/users';
 
 import { uploadImage } from './api/upload';
 
@@ -22,6 +24,7 @@ function Main({ onLogout }) {
   const [activeRoomId, setActiveRoomId] = useState(null);
   const [activeChatId, setActiveChatId] = useState(null);
   const [activeChatName, setActiveChatName] = useState('');
+  
 
   const [isUploading, setIsUploading] = useState(false);
 
@@ -32,6 +35,7 @@ function Main({ onLogout }) {
     () => JSON.parse(localStorage.getItem('chat_user') || 'null'),
     []
   );
+  const { friends, setFriends, loadFriends } = useFriends(currentUser);
 const { users, searchResults, isSearching, search, clearSearch } = useUsers();
   const { unreadCounts, clearForUser, incrementForUser } =
     useUnreadCounts(currentUser);
@@ -54,6 +58,18 @@ const { users, searchResults, isSearching, search, clearSearch } = useUsers();
     patchMessage,
     loadOlder,
   } = useChatHistory(currentUser);
+
+  const handleAddFriend = async (friendId, friendName) => {
+  try {
+    await addFriend(friendId);
+    // Перезагружаем список друзей, чтобы Sidebar обновился
+    await loadFriends();
+    alert(`${friendName} добавлен в друзья!`);
+  } catch (err) {
+    console.error('Ошибка добавления друга:', err);
+    alert('Не удалось добавить друга');
+  }
+};
 
   const { isConnected, send } = useWebSocket({
     currentUser,
@@ -155,6 +171,7 @@ const { users, searchResults, isSearching, search, clearSearch } = useUsers();
         onClientClick={handleClientClick}
         activeChatId={activeChatId}
         unreadCounts={unreadCounts}
+        friends={friends}
       />
 
       <div className="main_big">
@@ -166,6 +183,8 @@ const { users, searchResults, isSearching, search, clearSearch } = useUsers();
         isSearching={isSearching}
         onClientClick={handleClientClick}
         clearSearch={clearSearch}
+        friends={friends}
+        onAddFriend={handleAddFriend}
       />
 
         <MessageList

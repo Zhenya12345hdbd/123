@@ -178,7 +178,26 @@ text-transform: uppercase;
 .delete img:hover{
  width: 25px;
  cursor: pointer;
- 
+}
+.add_friend{
+    justify-content: center;
+    align-items: center;
+    width: 30px;
+    height: 25px;
+    display: flex;
+    
+}
+.add_friend img{
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    transition: width 0.3s ease, height 0.3s ease;
+    
+}
+.add_friend img:hover{
+    width: 25px;
+    height: 25px;
+    
 }
 
 
@@ -867,10 +886,10 @@ padding-bottom: 10px;
 .search_result_item {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 10px;
   padding: 10px 15px;
   color: white;
-  cursor: pointer;
   font-size: 14px;
   border-bottom: 1px solid #333;
 }

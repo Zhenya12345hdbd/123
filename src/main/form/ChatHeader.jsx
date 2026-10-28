@@ -6,8 +6,9 @@ import found from '../image/found.png';
 import ding from '../image/ding.png';
 import three from '../image/three.png';
 import userPlaceholder from '../image/photo_user.avif';
+import add_friends from '../image/add_friend.png'
 
-function ChatHeader({ onSearch, searchResults, isSearching, onClientClick, clearSearch }) {
+function ChatHeader({ onSearch, searchResults, isSearching, onClientClick, clearSearch, friends, onAddFriend}) {
   const [query, setQuery] = useState('');
 
   const handleInputChange = (e) => {
@@ -17,6 +18,8 @@ function ChatHeader({ onSearch, searchResults, isSearching, onClientClick, clear
     onSearch(value); // вызываем поиск на сервере
   }
 };
+
+
 
   const handleUserClick = (user) => {
     onClientClick(user.id, `${user.first_name} ${user.last_name}`);
@@ -74,6 +77,7 @@ function ChatHeader({ onSearch, searchResults, isSearching, onClientClick, clear
                     alt={u.first_name}
                   />
                   <span>{u.first_name} {u.last_name}</span>
+                    <div className='add_friend'><img src={add_friends}  onClick={(e) => { e.stopPropagation(); onAddFriend(u.id, `${u.first_name} ${u.last_name}`); }} /> </div>
                 </div>
               ))
             ) : (
