@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import '../main.css';
 import settings from '../image/settings.png';
 import userPlaceholder from '../image/photo_user.avif';
-import { fetchFriends, removeFriend } from '../api/users';
-import delet from '../image/delete.png'
+import { removeFriend } from '../api/users';
+import delet from '../image/delete.png';
 
 function Sidebar({
   onLogout,
@@ -12,55 +12,32 @@ function Sidebar({
   onClientClick,
   activeChatId,
   unreadCounts,
+  friends = [],       // <-- берем из пропсов
+  loadFriends,        // <-- чтобы обновить после удаления
+  isLoadingFriends,   // <-- флаг загрузки
 }) {
-  const [friends, setFriends] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
 
-  // Загружаем друзей при монтировании
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const data = await fetchFriends();
-        if (!cancelled) setFriends(data);
-      } catch (err) {
-        console.error('Ошибка загрузки друзей:', err);
-      } finally {
-        if (!cancelled) setIsLoading(false);
-      }
-    })();
-    return () => { cancelled = true; };
-  }, []);
+  const handleRemoveFriend = async (e, friendId, first_name, last_name) => {
+    e.stopPropagation();
 
-  const handleRemoveFriend = async (e, friendId, first_name, last_name ) => {
-    e.stopPropagation(); // Чтобы клик по крестику не открывал чат
-    
-    if (!window.confirm(`удалить ${first_name} ${last_name} из друзей?`)) return;
-
-    // Оптимистичное обновление: убираем из UI сразу
-    setFriends(prev => prev.filter(f => f.id !== friendId));
+    if (!window.confirm(`Удалить ${first_name} ${last_name} из друзей?`)) return;
 
     try {
       await removeFriend(friendId);
+      // После успешного удаления просим main.jsx перезагрузить друзей
+      if (loadFriends) await loadFriends();
     } catch (err) {
       console.error('Ошибка удаления друга:', err);
       alert('Не удалось удалить друга');
-      // Если ошибка, возвращаем обратно (загружаем заново)
-      try {
-        const data = await fetchFriends();
-        setFriends(data);
-      } catch (e) {}
     }
   };
 
-  // Локальный поиск по друзьям (быстрый)
   const filteredFriends = friends.filter((user) => {
     const fullName = `${user.first_name} ${user.last_name}`.toLowerCase();
     return fullName.includes(searchTerm.toLowerCase());
   });
 
-  // Сортировка (онлайн сверху)
   const sortedFriends = [...filteredFriends].sort((a, b) => {
     const aOnline = onlineUsers.some((id) => String(id) === String(a.id));
     const bOnline = onlineUsers.some((id) => String(id) === String(b.id));
@@ -109,7 +86,7 @@ function Sidebar({
         </div>
 
         <div className="list">
-          {isLoading ? (
+          {isLoadingFriends ? (
             <p style={{ color: '#888', textAlign: 'center' }}>Загрузка...</p>
           ) : sortedFriends.length === 0 ? (
             <p style={{ color: '#888', textAlign: 'center', fontSize: 12 }}>
@@ -129,8 +106,16 @@ function Sidebar({
                   <div className={`tochka ${isUserOnline ? 'online' : 'offline'}`} />
                   <img src={u.avatar_path || userPlaceholder} className="photo_user" alt={u.first_name} />
                   <div className="user_info">
-                    <p className="name_full" onClick={() => onClientClick(u.id, `${u.first_name} ${u.last_name}`)}>{u.first_name} {u.last_name}</p>
-                    <div className='delete'><img src={delet} onClick={(e) => handleRemoveFriend(e, u.id, u.first_name, u.last_name)}/></div>
+                    <p className="name_full" onClick={() => onClientClick(u.id, `${u.first_name} ${u.last_name}`)}>
+                      {u.first_name} {u.last_name}
+                    </p>
+                    <div className='delete'>
+                      <img 
+                        src={delet} 
+                        onClick={(e) => handleRemoveFriend(e, u.id, u.first_name, u.last_name)} 
+                        alt="delete" 
+                      />
+                    </div>
                     <div className="entered_message">{count > 0 ? count : ''}</div>
                   </div>
                 </div>

@@ -35,7 +35,7 @@ function Main({ onLogout }) {
     () => JSON.parse(localStorage.getItem('chat_user') || 'null'),
     []
   );
-  const { friends, setFriends, loadFriends } = useFriends(currentUser);
+  const { friends, isLoading: isLoadingFriends, loadFriends } = useFriends(currentUser);
 const { users, searchResults, isSearching, search, clearSearch } = useUsers();
   const { unreadCounts, clearForUser, incrementForUser } =
     useUnreadCounts(currentUser);
@@ -165,14 +165,16 @@ const { users, searchResults, isSearching, search, clearSearch } = useUsers();
   return (
     <div className="main">
       <Sidebar
-        onLogout={onLogout}
-        onlineUsers={onlineUsers}
-        currentUser={currentUser}
-        onClientClick={handleClientClick}
-        activeChatId={activeChatId}
-        unreadCounts={unreadCounts}
-        friends={friends}
-      />
+  onLogout={onLogout}
+  onlineUsers={onlineUsers}
+  currentUser={currentUser}
+  onClientClick={handleClientClick}
+  activeChatId={activeChatId}
+  unreadCounts={unreadCounts}
+  friends={friends}
+  loadFriends={loadFriends}
+  isLoadingFriends={isLoadingFriends}
+/>
 
       <div className="main_big">
       <ChatHeader
