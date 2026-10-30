@@ -388,6 +388,16 @@ letter-spacing: 0px;
 
 .messages{
     width: 900px;
+    position: relative;
+}
+.message::before{
+    content: '';
+    position: absolute;
+    background-color:#E0E0E0 ;
+    width: 10px;
+    height: 10px;
+    left: 30px;
+
 }
 
 .message{
@@ -453,7 +463,10 @@ letter-spacing: 0px;
 
 .message_user{
      background-color: #E0E0E0;
-    border-radius: 45px;
+    border-top-right-radius: 20px;
+    border-bottom-right-radius: 20px;
+    border-bottom-left-radius: 20px;
+    
     padding: 7px 12px;
     height: auto;
 }
