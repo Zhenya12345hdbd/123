@@ -164,17 +164,17 @@ const { users, searchResults, isSearching, search, clearSearch } = useUsers();
 
   return (
     <div className="main">
-      <Sidebar
-  onLogout={onLogout}
-  onlineUsers={onlineUsers}
-  currentUser={currentUser}
-  onClientClick={handleClientClick}
-  activeChatId={activeChatId}
-  unreadCounts={unreadCounts}
-  friends={friends}
-  loadFriends={loadFriends}
-  isLoadingFriends={isLoadingFriends}
-/>
+          <Sidebar
+      onLogout={onLogout}
+      onlineUsers={onlineUsers}
+      currentUser={currentUser}
+      onClientClick={handleClientClick}
+      activeChatId={activeChatId}
+      unreadCounts={unreadCounts}
+      friends={friends}
+      loadFriends={loadFriends}
+      isLoadingFriends={isLoadingFriends}
+    />
 
       <div className="main_big">
       <ChatHeader

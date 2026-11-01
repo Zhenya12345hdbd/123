@@ -388,17 +388,10 @@ letter-spacing: 0px;
 
 .messages{
     width: 900px;
-    position: relative;
+    z-index: 2;
 }
-.message::before{
-    content: '';
-    position: absolute;
-    background-color:#E0E0E0 ;
-    width: 10px;
-    height: 10px;
-    left: 30px;
 
-}
+
 
 .message{
     display: flex;
@@ -408,6 +401,8 @@ letter-spacing: 0px;
     padding-top: 10px;  
     width: 100%; 
     margin-top: auto;  
+    position: relative;
+    
 }
 
 .message-left{
@@ -415,10 +410,23 @@ letter-spacing: 0px;
 }
 .message-right{
     justify-content: flex-end;
+    
 }
 .message_user_right{
     justify-content: flex-end;
+    
+    border-top-left-radius: 20px;
+    border-bottom-right-radius: 20px;
+    border-bottom-left-radius: 20px;
 }
+.message_user_left{
+    justify-content: flex-end;
+    
+    border-top-right-radius: 20px;
+    border-bottom-right-radius: 20px;
+    border-bottom-left-radius: 20px;
+}
+
 
 /* стралочки */
 .arrow-4 {
@@ -463,9 +471,8 @@ letter-spacing: 0px;
 
 .message_user{
      background-color: #E0E0E0;
-    border-top-right-radius: 20px;
-    border-bottom-right-radius: 20px;
-    border-bottom-left-radius: 20px;
+   
+    position: relative;
     
     padding: 7px 12px;
     height: auto;
@@ -492,6 +499,7 @@ animation-iteration-count: 3;
 
 .message-right{
     justify-content: flex-end;
+    
 }
 .system_message{
     display: flex;
@@ -929,4 +937,35 @@ padding-bottom: 10px;
   height: 24px;
   border-radius: 4px;
   object-fit: cover;
+}
+
+.message-left .message_user,
+.message-right .message_user {
+  position: relative;
+}
+
+/* Левые сообщения (от собеседника) */
+.message-left .message_user::before {
+  content: '';
+  position: absolute;
+  left: -10px;      /* Выносим влево */
+  bottom: 58px;    /* Привязываем к низу */
+  width: 0;
+  height: 0;
+  border-top: 0px solid transparent;
+  border-bottom: 15px solid transparent;
+  border-right: 20px solid #E0E0E0; /* Цвет пузыря */
+}
+
+/* Правые сообщения (мои) */
+.message-right .message_user::before {
+  content: '';
+  position: absolute;
+  right: -10px;     /* Выносим вправо */
+  bottom: 58px;
+  width: 0;
+  height: 0;
+  border-top: 0px solid transparent;
+  border-bottom: 15px solid transparent;
+  border-left: 20px solid #E0E0E0; /* Цвет пузыря */
 }

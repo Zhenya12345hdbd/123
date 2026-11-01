@@ -150,7 +150,9 @@ function MessageList({
                     />
                   )}
 
-                  <div className="message_user">
+                  <div className={`message_user ${
+                        isMyMessage ? 'message_user_right' : 'message_user_left'
+                      }`}>
                     <div
                       className={`user_date ${
                         isMyMessage ? 'user_date_right' : 'user_date_left'
