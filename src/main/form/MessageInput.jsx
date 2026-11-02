@@ -16,7 +16,13 @@ function MessageInput({
 }) {
 
   const [showEmoji, setShowEmoji] = useState(false);
+  const [moveEmoji, setMoveEmoji ] = useState('emoji_table_start')
   const textareaRef = useRef(null);
+
+  const move_emoji = () =>{
+    setShowEmoji(!showEmoji)
+    setMoveEmoji('')
+  }
 
   const onEmojiClick = (emojiData) => {
     const textarea = textareaRef.current;
@@ -167,7 +173,7 @@ function MessageInput({
           ></textarea>
         </form>
 
-        <img src={smile} onClick={() => setShowEmoji(!showEmoji)} className="smile pointer" alt="Smile" />
+        <img src={smile} onClick={move_emoji} className="smile pointer" alt="Smile" />
         {showEmoji && (
               <div className='emoji_table'>
                 <EmojiPicker 

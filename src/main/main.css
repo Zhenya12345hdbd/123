@@ -973,8 +973,16 @@ padding-bottom: 10px;
 
 .emoji_table{
     position: absolute;
-    bottom: 70px;
+   
     right: 0;
+}
+.emoji_table_start{
+    bottom: 0px;
+    
+}
+.emoji_table_finish{
+    bottom: 70px;
+    
 }
 
 .EmojiPickerReact [data-epr-part="category-label"] {
