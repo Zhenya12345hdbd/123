@@ -414,7 +414,6 @@ letter-spacing: 0px;
 }
 .message_user_right{
     justify-content: flex-end;
-    
     border-top-left-radius: 20px;
     border-bottom-right-radius: 20px;
     border-bottom-left-radius: 20px;
@@ -564,6 +563,7 @@ padding-bottom: 10px;
     flex-direction: column;
     width: 100%;
     border-top: 1px solid #0000003D;
+    position: relative;
 }
 .footer_main{
     display: flex;
@@ -949,7 +949,7 @@ padding-bottom: 10px;
   content: '';
   position: absolute;
   left: -10px;      /* Выносим влево */
-  bottom: 58px;    /* Привязываем к низу */
+  top: 0;    /* Привязываем к низу */
   width: 0;
   height: 0;
   border-top: 0px solid transparent;
@@ -962,10 +962,34 @@ padding-bottom: 10px;
   content: '';
   position: absolute;
   right: -10px;     /* Выносим вправо */
-  bottom: 58px;
+  top: 0;
   width: 0;
   height: 0;
   border-top: 0px solid transparent;
   border-bottom: 15px solid transparent;
   border-left: 20px solid #E0E0E0; /* Цвет пузыря */
+}
+
+
+.emoji_table{
+    position: absolute;
+    bottom: 70px;
+    right: 0;
+}
+
+.EmojiPickerReact [data-epr-part="category-label"] {
+  display: none !important;
+}
+
+/* Убираем пустое пространство, которое занимал заголовок */
+.EmojiPickerReact {
+  --epr-category-label-height: 0px !important;
+}
+.EmojiPickerReact .epr-body::-webkit-scrollbar {
+  display: none; /* Для Chrome, Safari, Edge */
+}
+
+.EmojiPickerReact .epr-body {
+  scrollbar-width: none; /* Для Firefox */
+  -ms-overflow-style: none; /* Для старых Edge/IE */
 }

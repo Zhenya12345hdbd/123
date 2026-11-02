@@ -2,6 +2,8 @@ import '../main.css';
 import fileIcon from '../image/file.png';
 import voice from '../image/voice.png';
 import smile from '../image/smile.png';
+import EmojiPicker, { Categories } from 'emoji-picker-react';
+import { useState, useRef } from 'react';
 
 function MessageInput({
   onSend,
@@ -12,6 +14,26 @@ function MessageInput({
   pendingFiles,
   isUploading,
 }) {
+
+  const [showEmoji, setShowEmoji] = useState(false);
+  const textareaRef = useRef(null);
+
+  const onEmojiClick = (emojiData) => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const text = textarea.value;
+
+    // Вставляем эмодзи в позицию курсора
+    textarea.value = text.slice(0, start) + emojiData.emoji + text.slice(end);
+    
+    // Возвращаем фокус и ставим курсор после эмодзи
+    textarea.focus();
+    textarea.setSelectionRange(start + emojiData.emoji.length, start + emojiData.emoji.length);
+  }; 
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     const textarea = e.target.querySelector('textarea');
@@ -82,20 +104,6 @@ function MessageInput({
         <button
           className="button_delete_one_image"
           onClick={() => onRemoveSingleFile(idx)}
-          style={{
-            position: 'absolute',
-            top: '-6px',
-            right: '-6px',
-            width: '20px',
-            height: '20px',
-            borderRadius: '50%',
-            border: 'none',
-            background: '#ff4444',
-            color: '#fff',
-            cursor: 'pointer',
-            padding: 0,
-            lineHeight: 1,
-          }}
         >
           ✕
         </button>
@@ -130,6 +138,7 @@ function MessageInput({
 
         <form onSubmit={handleSubmit}>
           <textarea
+          ref={textareaRef}
             className="main_form"
             placeholder={
               isUploading
@@ -158,7 +167,21 @@ function MessageInput({
           ></textarea>
         </form>
 
-        <img src={smile} className="smile pointer" alt="Smile" />
+        <img src={smile} onClick={() => setShowEmoji(!showEmoji)} className="smile pointer" alt="Smile" />
+        {showEmoji && (
+              <div className='emoji_table'>
+                <EmojiPicker 
+                className="my-picker"
+                  previewConfig={{ showPreview: false }}
+                  searchDisabled={true}
+                  onEmojiClick={onEmojiClick} 
+                  theme="dark" // Тёмная тема под твой дизайн
+                  categories={[Categories.SMILEYS_PEOPLE]}
+                  height={80}
+                  width={1025}
+                />
+              </div>
+            )}
       </div>
     </div>
   );
