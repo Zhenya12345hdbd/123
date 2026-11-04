@@ -32,3 +32,8 @@ export async function addFriend(friendId) {
     body: JSON.stringify({ friend_id: friendId }),
   });
 }
+export async function deleteAccount() {
+  return request(`${API.base}/delete_account.php`, {
+    method: 'POST',
+  });
+}

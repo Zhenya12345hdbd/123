@@ -14,18 +14,17 @@ import { usePendingFiles } from './hooks/usePendingFiles';
 import { useChatRooms } from './hooks/useChatRooms';
 import { useChatHistory } from './hooks/useChatHistory';
 import { useFriends } from './hooks/useFriends';
-import { addFriend } from './api/users';
 
 import { uploadImage } from './api/upload';
 
 function Main({ onLogout }) {
   const [onlineUsers, setOnlineUsers] = useState([]);
+  const [friendRequests, setFriendRequests] = useState([]); // <-- Заявки в друзья
 
   const [activeRoomId, setActiveRoomId] = useState(null);
   const [activeChatId, setActiveChatId] = useState(null);
   const [activeChatName, setActiveChatName] = useState('');
   
-
   const [isUploading, setIsUploading] = useState(false);
 
   const chatRef = useRef(null);
@@ -35,10 +34,10 @@ function Main({ onLogout }) {
     () => JSON.parse(localStorage.getItem('chat_user') || 'null'),
     []
   );
+
   const { friends, isLoading: isLoadingFriends, loadFriends } = useFriends(currentUser);
-const { users, searchResults, isSearching, search, clearSearch } = useUsers();
-  const { unreadCounts, clearForUser, incrementForUser } =
-    useUnreadCounts(currentUser);
+  const { users, searchResults, isSearching, search, clearSearch } = useUsers();
+  const { unreadCounts, clearForUser, incrementForUser } = useUnreadCounts(currentUser);
 
   const {
     pendingFiles,
@@ -59,18 +58,7 @@ const { users, searchResults, isSearching, search, clearSearch } = useUsers();
     loadOlder,
   } = useChatHistory(currentUser);
 
-  const handleAddFriend = async (friendId, friendName) => {
-  try {
-    await addFriend(friendId);
-    // Перезагружаем список друзей, чтобы Sidebar обновился
-    await loadFriends();
-    alert(`${friendName} добавлен в друзья!`);
-  } catch (err) {
-    console.error('Ошибка добавления друга:', err);
-    alert('Не удалось добавить друга');
-  }
-};
-
+  // 1. Сначала вызываем useWebSocket и получаем send
   const { isConnected, send } = useWebSocket({
     currentUser,
     activeRoomIdRef,
@@ -85,13 +73,34 @@ const { users, searchResults, isSearching, search, clearSearch } = useUsers();
     onStatus: ({ userId, isOnline }) => {
       setOnlineUsers((prev) =>
         isOnline
-          ? prev.includes(userId)
-            ? prev
-            : [...prev, userId]
+          ? prev.includes(userId) ? prev : [...prev, userId]
           : prev.filter((id) => id !== userId)
       );
     },
+    // 2. ДОБАВЛЯЕМ КОЛБЭКИ ДЛЯ ДРУЗЕЙ
+    onNewRequest: (data) => {
+      setFriendRequests((prev) => [...prev, data]);
+    },
+    onRequestHandled: (data) => {
+      if (data.action === 'accept') {
+        loadFriends(); // Обновляем список друзей
+        alert('Ваша заявка в друзья принята!');
+      } else {
+        alert('Ваша заявка отклонена');
+      }
+    }
   });
+
+  // 3. Теперь sendFriendRequest может использовать send
+  const sendFriendRequest = (targetId) => {
+    send({ type: 'send_request', target_id: targetId });
+  };
+
+  const handleRequestAction = (requestId, action) => {
+    send({ type: 'handle_request', request_id: requestId, action });
+    // Убираем заявку из локального состояния
+    setFriendRequests(prev => prev.filter(r => r.request_id !== requestId));
+  };
 
   const { openRoom } = useChatRooms({ currentUser, activeRoomIdRef });
 
@@ -113,7 +122,6 @@ const { users, searchResults, isSearching, search, clearSearch } = useUsers();
       send({
         type: 'mark_all_read',
         room_id: activeRoomIdRef.current,
-        user_id: currentUser.id,
       });
     }
   };
@@ -164,30 +172,32 @@ const { users, searchResults, isSearching, search, clearSearch } = useUsers();
 
   return (
     <div className="main">
-          <Sidebar
-      onLogout={onLogout}
-      onlineUsers={onlineUsers}
-      currentUser={currentUser}
-      onClientClick={handleClientClick}
-      activeChatId={activeChatId}
-      unreadCounts={unreadCounts}
-      friends={friends}
-      loadFriends={loadFriends}
-      isLoadingFriends={isLoadingFriends}
-    />
+      <Sidebar
+        onLogout={onLogout}
+        onlineUsers={onlineUsers}
+        currentUser={currentUser}
+        onClientClick={handleClientClick}
+        activeChatId={activeChatId}
+        unreadCounts={unreadCounts}
+        friends={friends}
+        loadFriends={loadFriends}
+        isLoadingFriends={isLoadingFriends}
+      />
 
       <div className="main_big">
-      <ChatHeader
-        title={activeRoomId ? activeChatName : 'Выберите собеседника'}
-        isConnected={isConnected}
-        onSearch={search}
-        searchResults={searchResults}
-        isSearching={isSearching}
-        onClientClick={handleClientClick}
-        clearSearch={clearSearch}
-        friends={friends}
-        onAddFriend={handleAddFriend}
-      />
+        <ChatHeader
+          title={activeRoomId ? activeChatName : 'Выберите собеседника'}
+          isConnected={isConnected}
+          onSearch={search}
+          searchResults={searchResults}
+          isSearching={isSearching}
+          onClientClick={handleClientClick}
+          clearSearch={clearSearch}
+          friends={friends}
+          onSendRequest={sendFriendRequest}
+          friendRequests={friendRequests}
+          onHandleRequest={handleRequestAction} 
+        />
 
         <MessageList
           messages={messages}

@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { USE_MOCK } from '../../config';
-import { WS_URL } from '../../config';
+import { USE_MOCK, WS_URL } from '../../config';
 
 export function useWebSocket({
   currentUser,
@@ -8,6 +7,8 @@ export function useWebSocket({
   onMessage,
   onUnreadIncrement,
   onStatus,
+  onNewRequest,       // <-- ДОБАВЛЕНО
+  onRequestHandled,   // <-- ДОБАВЛЕНО
 }) {
   const [isConnected, setIsConnected] = useState(false);
   const socketRef = useRef(null);
@@ -107,6 +108,14 @@ export function useWebSocket({
           onMessage({ ...data, __read: true });
           break;
 
+        case 'new_friend_request':
+          onNewRequest?.(data);
+          break;
+
+        case 'request_handled':
+          onRequestHandled?.(data);
+          break;
+
         case 'user_status':
           onStatus?.({ userId: data.user_id, isOnline: data.is_online });
           break;
@@ -144,7 +153,18 @@ export function useWebSocket({
           avatar_path: currentUser.avatar_path,
         });
       }
-      // mark_all_read в моке просто игнорируем
+      // В моке эмулируем отправку заявки (для теста)
+      if (payload.type === 'send_request') {
+        setTimeout(() => {
+            onNewRequest?.({
+                type: 'new_friend_request',
+                sender_id: 11,
+                sender_name: 'Маша Машина',
+                sender_avatar: null,
+                request_id: Date.now()
+            });
+        }, 1000);
+      }
       return true;
     }
 

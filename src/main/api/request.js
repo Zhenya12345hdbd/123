@@ -52,6 +52,10 @@ if (url.includes('add_friend.php')) {
   console.log('[MOCK] Добавление друга:', options.body);
   return { success: true };
 }
+if (url.includes('delete_account.php')) {
+  console.log('[MOCK] Удаление аккаунта');
+  return { success: true };
+}
   if (url.includes('get_friends.php')) return MOCK_FRIENDS;
 
   // --- 2. Остальные эндпоинты ---

@@ -16,12 +16,12 @@ function MessageInput({
 }) {
 
   const [showEmoji, setShowEmoji] = useState(false);
-  const [moveEmoji, setMoveEmoji ] = useState('emoji_table_start')
+  
   const textareaRef = useRef(null);
 
   const move_emoji = () =>{
     setShowEmoji(!showEmoji)
-    setMoveEmoji('')
+   
   }
 
   const onEmojiClick = (emojiData) => {
@@ -157,7 +157,7 @@ function MessageInput({
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
                 const text = e.target.value.trim();
-
+                  setShowEmoji(!showEmoji)
                 if (pendingFiles.length > 0) {
                   onImageSend(text);
                   e.target.value = '';
@@ -175,7 +175,7 @@ function MessageInput({
 
         <img src={smile} onClick={move_emoji} className="smile pointer" alt="Smile" />
         {showEmoji && (
-              <div className='emoji_table'>
+              <div className={`emoji_table ${showEmoji ? 'open' : ''}`}>
                 <EmojiPicker 
                 className="my-picker"
                   previewConfig={{ showPreview: false }}

@@ -3,28 +3,46 @@ import '../main.css';
 import star from '../image/star.png';
 import peoople from '../image/peoople.png';
 import found from '../image/found.png';
-import ding from '../image/ding.png';
+import ding from '../image/ding.png'
 import three from '../image/three.png';
 import userPlaceholder from '../image/photo_user.avif';
 import add_friends from '../image/add_friend.png';
-import added_friend from '../image/added_friend.png'
+import added_friend from '../image/added_friend.png';
 
-function ChatHeader({ onSearch, searchResults, isSearching, onClientClick, clearSearch, friends, onAddFriend}) {
+function ChatHeader({ 
+  onSearch, 
+  searchResults, 
+  isSearching, 
+  onClientClick, 
+  clearSearch, 
+  friends, 
+  onSendRequest, 
+  friendRequests, 
+  onHandleRequest // <-- Принимаем правильный пропс
+}) {
   const [query, setQuery] = useState('');
+  const [showRequests, setShowRequests] = useState(false);
 
   const handleInputChange = (e) => {
-  const value = e.target.value;
-  setQuery(value);
-  if (typeof onSearch === 'function') {
-    onSearch(value); // вызываем поиск на сервере
-  }
-};
+    const value = e.target.value;
+    setQuery(value);
+    if (typeof onSearch === 'function') {
+      onSearch(value);
+    }
+  };
 
-const isFriend = (userId) => {
+  const isFriend = (userId) => {
     return friends && friends.some(f => String(f.id) === String(userId));
   };
 
-
+  const handleRequestAction = (requestId, action) => {
+    // Вызываем функцию из main.jsx
+    if (onHandleRequest) {
+      onHandleRequest(requestId, action);
+    }
+    // Убираем из локального UI (в main.jsx это тоже произойдет, но для мгновенного отклика)
+    setShowRequests(false); 
+  };
 
   const handleUserClick = (user) => {
     onClientClick(user.id, `${user.first_name} ${user.last_name}`);
@@ -59,12 +77,40 @@ const isFriend = (userId) => {
           </button>
         </form>
         
-        <img src={ding} alt="Ding" className="small_img pointer" />
-        <div className="red_point red_point_ding"></div>
+        {/* Иконка колокольчика с заявками */}
+        <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
+          
+         {showRequests && friendRequests?.length > 0 && (
+            <div className="friend-requests-dropdown">
+              <h4>Заявки в друзья</h4>
+              {friendRequests.map(req => (
+                <div key={req.request_id} className="request-item">
+                  <img src={req.sender_avatar || userPlaceholder} alt="avatar" />
+                  <span>{req.sender_name}</span>
+                  <div className="request-actions">
+                    <button onClick={() => handleRequestAction(req.request_id, 'accept')} className="btn-accept">✓</button>
+                    <button onClick={() => handleRequestAction(req.request_id, 'reject')} className="btn-reject">✕</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+ 
+        </div>
+            <img 
+            src={ding} 
+            alt="Ding" 
+            className="small_img pointer"
+            onClick={() => setShowRequests(!showRequests)} // <-- Открываем/закрываем
+          />
+          {/* Красная точка, если есть заявки */}
+          {friendRequests?.length > 0 && !showRequests && (
+             <div className="red_point red_point_ding"></div>
+          )}
         <img src={three} alt="Three dots" className="small_img pointer" />
         <div className="red_point red_point_three"></div>
 
-        {/* Выпадающий список результатов */}
+        {/* Выпадающий список поиска */}
         {query.trim() !== '' && (
           <div className="search_results_dropdown">
             {isSearching ? (
@@ -82,11 +128,20 @@ const isFriend = (userId) => {
                     alt={u.first_name}
                   />
                   <span>{u.first_name} {u.last_name}</span>
-                  {isFriend(u.id) ? (<div className='added_friend'><img src={added_friend} /> </div>)
-                   :(
-
-                    <div className='add_friend'><img src={add_friends}  onClick={(e) => { e.stopPropagation(); onAddFriend(u.id, `${u.first_name} ${u.last_name}`); }} /> </div>
-                   )}
+                  {isFriend(u.id) ? (
+                    <div className='added_friend'><img src={added_friend} alt="added" /></div>
+                  ) : (
+                    <div className='add_friend'>
+                      <img 
+                        src={add_friends} 
+                        alt="add"
+                        onClick={(e) => { 
+                          e.stopPropagation(); 
+                          onSendRequest(u.id); // Отправляем заявку
+                        }} 
+                      /> 
+                    </div>
+                  )}
                 </div>
               ))
             ) : (

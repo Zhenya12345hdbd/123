@@ -4,6 +4,7 @@ import settings from '../image/settings.png';
 import userPlaceholder from '../image/photo_user.avif';
 import { removeFriend } from '../api/users';
 import delet from '../image/delete.png';
+import { deleteAccount } from '../api/users';
 
 function Sidebar({
   onLogout,
@@ -17,6 +18,29 @@ function Sidebar({
   isLoadingFriends,   // <-- флаг загрузки
 }) {
   const [searchTerm, setSearchTerm] = useState('');
+
+  const handleDeleteAccount = async () => {
+  const isConfirmed = window.confirm(
+    'Вы уверены, что хотите удалить аккаунт? Вся ваша переписка будет безвозвратно удалена.'
+  );
+  
+  if (!isConfirmed) return;
+
+  try {
+    await deleteAccount();
+    
+    // Очищаем хранилище и выходим
+    localStorage.removeItem('chat_user');
+    localStorage.removeItem('chat_token');
+    
+    // Если есть пропс onLogout (из App.js) — вызываем его, чтобы перекинуть на экран входа
+    if (onLogout) onLogout(); 
+    
+  } catch (err) {
+    console.error(err);
+    alert('Не удалось удалить аккаунт. Попробуйте позже.');
+  }
+};
 
   const handleRemoveFriend = async (e, friendId, first_name, last_name) => {
     e.stopPropagation();
@@ -66,6 +90,7 @@ function Sidebar({
         <div className="user_name">
           <p className="name_full">{currentUser.first_name} {currentUser.last_name}</p>
           <button onClick={handleLogout} className="button_exit">Выйти</button>
+          <button onClick={handleDeleteAccount} className="button_delete_account">Удалить аккаунт</button>
         </div>
       </div>
 

@@ -62,7 +62,86 @@ class Chat implements MessageComponentInterface {
     $this->broadcastStatus($from->user_id, true, $from);
     return;
 }
+        if (($data['type'] ?? '') === 'send_request') {
+    $targetId = (int)($data['target_id'] ?? 0);
+    if (!$targetId || $targetId === $from->user_id) return;
 
+    try {
+        // Сохраняем в БД
+        $stmt = $this->pdo->prepare("INSERT IGNORE INTO friend_requests (sender_id, receiver_id) VALUES (?, ?)");
+        $stmt->execute([$from->user_id, $targetId]);
+
+        // Отправляем уведомление получателю (если он онлайн)
+        if (isset($this->users[$targetId])) {
+            $this->users[$targetId]->send(json_encode([
+                'type' => 'new_friend_request',
+                'sender_id' => $from->user_id,
+                'sender_name' => $from->username,
+                'sender_avatar' => $from->avatar_path,
+                'request_id' => $this->pdo->lastInsertId(),
+            ]));
+        }
+    } catch (Exception $e) {
+        error_log("Friend request error: " . $e->getMessage());
+    }
+    return;
+}
+// === ОТВЕТ НА ЗАЯВКУ (ПРИНЯТЬ/ОТКЛОНИТЬ) ===
+if (($data['type'] ?? '') === 'handle_request') {
+    $requestId = (int)($data['request_id'] ?? 0);
+    $action = $data['action'] ?? ''; // 'accept' или 'reject'
+
+    if (!$requestId || !in_array($action, ['accept', 'reject'])) return;
+
+    try {
+        // Находим заявку
+        $stmt = $this->pdo->prepare("SELECT sender_id FROM friend_requests WHERE id = ? AND receiver_id = ? AND status = 'pending'");
+        $stmt->execute([$requestId, $from->user_id]);
+        $req = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($req) {
+            $senderId = (int)$req['sender_id'];
+
+            if ($action === 'accept') {
+                // Меняем статус
+                $this->pdo->prepare("UPDATE friend_requests SET status = 'accepted' WHERE id = ?")->execute([$requestId]);
+
+                // Добавляем друг друга в friends (JSON)
+                // 1. Себе
+                $stmt = $this->pdo->prepare("SELECT friends FROM users WHERE id = ?");
+                $stmt->execute([$from->user_id]);
+                $myFriends = json_decode($stmt->fetchColumn(), true) ?: [];
+                if (!in_array($senderId, $myFriends)) {
+                    $myFriends[] = $senderId;
+                    $this->pdo->prepare("UPDATE users SET friends = ? WHERE id = ?")->execute([json_encode($myFriends), $from->user_id]);
+                }
+                // 2. Отправителю
+                $stmt = $this->pdo->prepare("SELECT friends FROM users WHERE id = ?");
+                $stmt->execute([$senderId]);
+                $theirFriends = json_decode($stmt->fetchColumn(), true) ?: [];
+                if (!in_array($from->user_id, $theirFriends)) {
+                    $theirFriends[] = $from->user_id;
+                    $this->pdo->prepare("UPDATE users SET friends = ? WHERE id = ?")->execute([json_encode($theirFriends), $senderId]);
+                }
+            } else {
+                $this->pdo->prepare("UPDATE friend_requests SET status = 'rejected' WHERE id = ?")->execute([$requestId]);
+            }
+
+            // Уведомляем отправителя о результате
+            if (isset($this->users[$senderId])) {
+                $this->users[$senderId]->send(json_encode([
+                    'type' => 'request_handled',
+                    'request_id' => $requestId,
+                    'action' => $action,
+                    'by_user_id' => $from->user_id
+                ]));
+            }
+        }
+    } catch (Exception $e) {
+        error_log("Handle request error: " . $e->getMessage());
+    }
+    return;
+}
         // === ТЕКСТОВОЕ СООБЩЕНИЕ ===
         if (($data['type'] ?? '') === 'message' && isset($data['room_id'])) {
             $text    = trim($data['text'] ?? '');
