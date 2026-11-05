@@ -15,7 +15,8 @@ function Sidebar({
   unreadCounts,
   friends = [],       // <-- берем из пропсов
   loadFriends,        // <-- чтобы обновить после удаления
-  isLoadingFriends,   // <-- флаг загрузки
+  isLoadingFriends,
+  onRemoveFriend,   // <-- флаг загрузки
 }) {
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -42,20 +43,16 @@ function Sidebar({
   }
 };
 
-  const handleRemoveFriend = async (e, friendId, first_name, last_name) => {
-    e.stopPropagation();
+ const handleRemoveFriend = (e, friendId, first_name, last_name) => {
+  e.stopPropagation();
+  
+  if (!window.confirm(`Удалить ${first_name} ${last_name} из друзей?`)) return;
 
-    if (!window.confirm(`Удалить ${first_name} ${last_name} из друзей?`)) return;
-
-    try {
-      await removeFriend(friendId);
-      // После успешного удаления просим main.jsx перезагрузить друзей
-      if (loadFriends) await loadFriends();
-    } catch (err) {
-      console.error('Ошибка удаления друга:', err);
-      alert('Не удалось удалить друга');
-    }
-  };
+  // Вызываем функцию из main.jsx (она отправит WebSocket-сообщение)
+  if (onRemoveFriend) {
+    onRemoveFriend(friendId);
+  }
+};
 
   const filteredFriends = friends.filter((user) => {
     const fullName = `${user.first_name} ${user.last_name}`.toLowerCase();

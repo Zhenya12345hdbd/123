@@ -67,17 +67,23 @@ if (($data['type'] ?? '') === 'send_request') {
     if (!$targetId || $targetId === $from->user_id) return;
 
     try {
-        // 1. Проверяем, нет ли уже активной (pending) заявки
-        $stmt = $this->pdo->prepare("SELECT id FROM friend_requests WHERE sender_id = ? AND receiver_id = ? AND status = 'pending'");
+        // 1. Ищем ЛЮБУЮ заявку между этими пользователями (без фильтра по статусу)
+        $stmt = $this->pdo->prepare("SELECT id, status FROM friend_requests WHERE sender_id = ? AND receiver_id = ?");
         $stmt->execute([$from->user_id, $targetId]);
         $existing = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if ($existing) {
-            // Если заявка уже есть, просто берем её ID
             $requestId = (int)$existing['id'];
-            echo "Заявка уже существует (ID: $requestId). Отправляем уведомление повторно.\n";
+            
+            // Если заявка уже была (например, отклонена), возвращаем её в статус pending
+            if ($existing['status'] !== 'pending') {
+                $this->pdo->prepare("UPDATE friend_requests SET status = 'pending', created_at = NOW() WHERE id = ?")->execute([$requestId]);
+                echo "Обновлен статус старой заявки (ID: $requestId) на pending\n";
+            } else {
+                echo "Заявка уже существует (ID: $requestId). Отправляем уведомление повторно.\n";
+            }
         } else {
-            // 2. Если заявки нет — создаем новую
+            // 2. Если заявки вообще нет — создаем новую
             $stmt = $this->pdo->prepare("INSERT INTO friend_requests (sender_id, receiver_id) VALUES (?, ?)");
             $stmt->execute([$from->user_id, $targetId]);
             $requestId = (int)$this->pdo->lastInsertId();
@@ -91,7 +97,7 @@ if (($data['type'] ?? '') === 'send_request') {
                 'sender_id' => $from->user_id,
                 'sender_name' => $from->username,
                 'sender_avatar' => $from->avatar_path,
-                'request_id' => $requestId, // <-- Отправляем точный ID
+                'request_id' => $requestId,
             ]));
             echo "Уведомление отправлено пользователю $targetId\n";
         }
@@ -102,8 +108,55 @@ if (($data['type'] ?? '') === 'send_request') {
     return;
 }
 // === ОТВЕТ НА ЗАЯВКУ (ПРИНЯТЬ/ОТКЛОНИТЬ) ===
-// === ОТВЕТ НА ЗАЯВКУ (ПРИНЯТЬ/ОТКЛОНИТЬ) ===
-// === ОТВЕТ НА ЗАЯВКУ (ПРИНЯТЬ/ОТКЛОНИТЬ) ===
+// === УДАЛЕНИЕ ИЗ ДРУЗЕЙ ===
+if (($data['type'] ?? '') === 'remove_friend') {
+    $targetId = (int)($data['target_id'] ?? 0);
+    if (!$targetId || $targetId === $from->user_id) return;
+
+    try {
+        // Функция для удаления друга из JSON
+        $removeFriend = function($userId, $friendId) {
+            $stmt = $this->pdo->prepare("SELECT friends FROM users WHERE id = ?");
+            $stmt->execute([$userId]);
+            $friendsJson = $stmt->fetchColumn();
+            
+            $friends = [];
+            if ($friendsJson) {
+                $decoded = json_decode($friendsJson, true);
+                if (is_array($decoded)) {
+                    $friends = array_map('intval', $decoded);
+                }
+            }
+            
+            // Удаляем ID из массива
+            $friends = array_values(array_filter($friends, fn($id) => $id !== (int)$friendId));
+            
+            $newJson = json_encode($friends);
+            $upd = $this->pdo->prepare("UPDATE users SET friends = ? WHERE id = ?");
+            $upd->execute([$newJson, $userId]);
+        };
+
+        // 1. Удаляем у себя
+        $removeFriend($from->user_id, $targetId);
+        // 2. Удаляем у второго пользователя
+        $removeFriend($targetId, $from->user_id);
+
+        // 3. Уведомляем себя
+        $from->send(json_encode(['type' => 'friend_list_updated']));
+        echo "Удален друг $targetId у пользователя {$from->user_id}\n";
+
+        // 4. Уведомляем второго пользователя
+        if (isset($this->users[$targetId])) {
+            $this->users[$targetId]->send(json_encode(['type' => 'friend_list_updated']));
+            echo "Уведомление об удалении отправлено пользователю $targetId\n";
+        }
+
+    } catch (Exception $e) {
+        error_log("Remove friend error: " . $e->getMessage());
+        echo "ОШИБКА ПРИ УДАЛЕНИИ: " . $e->getMessage() . "\n";
+    }
+    return;
+}
 if (($data['type'] ?? '') === 'handle_request') {
     echo "\n=== ПОЛУЧЕНА КОМАНДА handle_request ===\n";
     echo "От пользователя: {$from->user_id}\n";

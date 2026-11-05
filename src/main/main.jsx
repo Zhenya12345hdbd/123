@@ -102,6 +102,9 @@ onFriendListUpdated: () => {
   const sendFriendRequest = (targetId) => {
     send({ type: 'send_request', target_id: targetId });
   };
+  const handleRemoveFriend = (friendId) => {
+  send({ type: 'remove_friend', target_id: friendId });
+};
 
   const handleRequestAction = (requestId, action) => {
     send({ type: 'handle_request', request_id: requestId, action });
@@ -189,6 +192,7 @@ onFriendListUpdated: () => {
         friends={friends}
         loadFriends={loadFriends}
         isLoadingFriends={isLoadingFriends}
+        onRemoveFriend={handleRemoveFriend}
       />
 
       <div className="main_big">
