@@ -82,13 +82,20 @@ function Main({ onLogout }) {
       setFriendRequests((prev) => [...prev, data]);
     },
     onRequestHandled: (data) => {
-      if (data.action === 'accept') {
-        loadFriends(); // Обновляем список друзей
-        alert('Ваша заявка в друзья принята!');
-      } else {
-        alert('Ваша заявка отклонена');
-      }
-    }
+  if (data.action === 'accept') {
+    loadFriends(); 
+    alert('Ваша заявка в друзья принята!');
+  } else {
+    alert('Ваша заявка отклонена');
+  }
+},
+
+// ВОТ ЭТО НУЖНО ДОБАВИТЬ:
+onFriendListUpdated: () => {
+  console.log('Сервер сообщил об обновлении списка друзей (для того, кто принял)');
+  loadFriends(); // Перезапрашиваем друзей
+}
+    
   });
 
   // 3. Теперь sendFriendRequest может использовать send
@@ -196,7 +203,7 @@ function Main({ onLogout }) {
           friends={friends}
           onSendRequest={sendFriendRequest}
           friendRequests={friendRequests}
-          onHandleRequest={handleRequestAction} 
+     onHandleRequest={handleRequestAction}
         />
 
         <MessageList

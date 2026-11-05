@@ -7,8 +7,9 @@ export function useWebSocket({
   onMessage,
   onUnreadIncrement,
   onStatus,
-  onNewRequest,       // <-- ДОБАВЛЕНО
-  onRequestHandled,   // <-- ДОБАВЛЕНО
+  onNewRequest,
+  onRequestHandled,
+  onFriendListUpdated, // <-- ДОБАВЛЕНО В ПРОПСЫ
 }) {
   const [isConnected, setIsConnected] = useState(false);
   const socketRef = useRef(null);
@@ -16,11 +17,9 @@ export function useWebSocket({
   useEffect(() => {
     if (!currentUser) return;
 
-    // === МОК: без реального сокета ===
+    // === МОК ===
     if (USE_MOCK) {
       setIsConnected(true);
-
-      // через 3 секунды «прилетает» новое сообщение — проверить рендер
       const t = setTimeout(() => {
         onMessage({
           id: Date.now(),
@@ -29,15 +28,11 @@ export function useWebSocket({
           room_id: activeRoomIdRef.current || 1,
           username: 'Маша Машина',
           text: 'Мок-сообщение в реальном времени',
-          time: new Date().toLocaleTimeString('ru-RU', {
-            hour: '2-digit',
-            minute: '2-digit',
-          }),
+          time: new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }),
           is_read: 0,
           avatar_path: null,
         });
       }, 3000);
-
       return () => clearTimeout(t);
     }
 
@@ -47,16 +42,12 @@ export function useWebSocket({
 
     const markRead = (roomId) => {
       socketRef.current?.send(
-        JSON.stringify({
-          type: 'mark_all_read',
-          room_id: roomId,
-        })
+        JSON.stringify({ type: 'mark_all_read', room_id: roomId })
       );
     };
 
     const handleIncomingChat = (data) => {
-      const isActive =
-        String(data.room_id) === String(activeRoomIdRef.current);
+      const isActive = String(data.room_id) === String(activeRoomIdRef.current);
       const fromOther = String(data.from) !== String(currentUser.id);
 
       if (isActive) {
@@ -109,11 +100,18 @@ export function useWebSocket({
           break;
 
         case 'new_friend_request':
+          console.log('ПРИШЛА ЗАЯВКА ОТ СЕРВЕРА:', data);
           onNewRequest?.(data);
           break;
 
         case 'request_handled':
           onRequestHandled?.(data);
+          break;
+
+        // ВОТ ОН, НОВЫЙ КЕЙС:
+        case 'friend_list_updated':
+          console.log('СЕРВЕР ОБНОВИЛ СПИСОК ДРУЗЕЙ');
+          onFriendListUpdated?.();
           break;
 
         case 'user_status':
@@ -131,11 +129,9 @@ export function useWebSocket({
     return () => {
       socket.close();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser]);
 
   const send = (payload) => {
-    // === МОК: локальное «эхо» ===
     if (USE_MOCK) {
       if (payload.type === 'message' && payload.text) {
         onMessage({
@@ -145,30 +141,25 @@ export function useWebSocket({
           room_id: payload.room_id,
           username: `${currentUser.first_name} ${currentUser.last_name}`,
           text: payload.text,
-          time: new Date().toLocaleTimeString('ru-RU', {
-            hour: '2-digit',
-            minute: '2-digit',
-          }),
+          time: new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }),
           is_read: 0,
           avatar_path: currentUser.avatar_path,
         });
       }
-      // В моке эмулируем отправку заявки (для теста)
       if (payload.type === 'send_request') {
         setTimeout(() => {
-            onNewRequest?.({
-                type: 'new_friend_request',
-                sender_id: 11,
-                sender_name: 'Маша Машина',
-                sender_avatar: null,
-                request_id: Date.now()
-            });
+          onNewRequest?.({
+            type: 'new_friend_request',
+            sender_id: 11,
+            sender_name: 'Маша Машина',
+            sender_avatar: null,
+            request_id: Date.now()
+          });
         }, 1000);
       }
       return true;
     }
 
-    // === РЕАЛЬНЫЙ WS ===
     const socket = socketRef.current;
     if (socket && socket.readyState === WebSocket.OPEN) {
       socket.send(JSON.stringify(payload));

@@ -62,72 +62,115 @@ class Chat implements MessageComponentInterface {
     $this->broadcastStatus($from->user_id, true, $from);
     return;
 }
-        if (($data['type'] ?? '') === 'send_request') {
+if (($data['type'] ?? '') === 'send_request') {
     $targetId = (int)($data['target_id'] ?? 0);
     if (!$targetId || $targetId === $from->user_id) return;
 
     try {
-        // Сохраняем в БД
-        $stmt = $this->pdo->prepare("INSERT IGNORE INTO friend_requests (sender_id, receiver_id) VALUES (?, ?)");
+        // 1. Проверяем, нет ли уже активной (pending) заявки
+        $stmt = $this->pdo->prepare("SELECT id FROM friend_requests WHERE sender_id = ? AND receiver_id = ? AND status = 'pending'");
         $stmt->execute([$from->user_id, $targetId]);
+        $existing = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        // Отправляем уведомление получателю (если он онлайн)
+        if ($existing) {
+            // Если заявка уже есть, просто берем её ID
+            $requestId = (int)$existing['id'];
+            echo "Заявка уже существует (ID: $requestId). Отправляем уведомление повторно.\n";
+        } else {
+            // 2. Если заявки нет — создаем новую
+            $stmt = $this->pdo->prepare("INSERT INTO friend_requests (sender_id, receiver_id) VALUES (?, ?)");
+            $stmt->execute([$from->user_id, $targetId]);
+            $requestId = (int)$this->pdo->lastInsertId();
+            echo "Создана новая заявка (ID: $requestId)\n";
+        }
+
+        // 3. Отправляем уведомление получателю
         if (isset($this->users[$targetId])) {
             $this->users[$targetId]->send(json_encode([
                 'type' => 'new_friend_request',
                 'sender_id' => $from->user_id,
                 'sender_name' => $from->username,
                 'sender_avatar' => $from->avatar_path,
-                'request_id' => $this->pdo->lastInsertId(),
+                'request_id' => $requestId, // <-- Отправляем точный ID
             ]));
+            echo "Уведомление отправлено пользователю $targetId\n";
         }
     } catch (Exception $e) {
         error_log("Friend request error: " . $e->getMessage());
+        echo "ОШИБКА ПРИ СОЗДАНИИ ЗАЯВКИ: " . $e->getMessage() . "\n";
     }
     return;
 }
 // === ОТВЕТ НА ЗАЯВКУ (ПРИНЯТЬ/ОТКЛОНИТЬ) ===
+// === ОТВЕТ НА ЗАЯВКУ (ПРИНЯТЬ/ОТКЛОНИТЬ) ===
+// === ОТВЕТ НА ЗАЯВКУ (ПРИНЯТЬ/ОТКЛОНИТЬ) ===
 if (($data['type'] ?? '') === 'handle_request') {
-    $requestId = (int)($data['request_id'] ?? 0);
-    $action = $data['action'] ?? ''; // 'accept' или 'reject'
+    echo "\n=== ПОЛУЧЕНА КОМАНДА handle_request ===\n";
+    echo "От пользователя: {$from->user_id}\n";
+    echo "requestId: " . ($data['request_id'] ?? 'НЕТ') . "\n";
+    echo "action: " . ($data['action'] ?? 'НЕТ') . "\n";
 
-    if (!$requestId || !in_array($action, ['accept', 'reject'])) return;
+    $requestId = (int)($data['request_id'] ?? 0);
+    $action = $data['action'] ?? '';
+
+    if (!$requestId || !in_array($action, ['accept', 'reject'])) {
+        echo "ОШИБКА: Неверные данные (requestId = $requestId, action = $action)\n";
+        return;
+    }
 
     try {
-        // Находим заявку
         $stmt = $this->pdo->prepare("SELECT sender_id FROM friend_requests WHERE id = ? AND receiver_id = ? AND status = 'pending'");
         $stmt->execute([$requestId, $from->user_id]);
         $req = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if ($req) {
+            echo "Заявка найдена! Отправитель: {$req['sender_id']}\n";
             $senderId = (int)$req['sender_id'];
 
             if ($action === 'accept') {
-                // Меняем статус
                 $this->pdo->prepare("UPDATE friend_requests SET status = 'accepted' WHERE id = ?")->execute([$requestId]);
 
-                // Добавляем друг друга в friends (JSON)
-                // 1. Себе
-                $stmt = $this->pdo->prepare("SELECT friends FROM users WHERE id = ?");
-                $stmt->execute([$from->user_id]);
-                $myFriends = json_decode($stmt->fetchColumn(), true) ?: [];
-                if (!in_array($senderId, $myFriends)) {
-                    $myFriends[] = $senderId;
-                    $this->pdo->prepare("UPDATE users SET friends = ? WHERE id = ?")->execute([json_encode($myFriends), $from->user_id]);
-                }
-                // 2. Отправителю
-                $stmt = $this->pdo->prepare("SELECT friends FROM users WHERE id = ?");
-                $stmt->execute([$senderId]);
-                $theirFriends = json_decode($stmt->fetchColumn(), true) ?: [];
-                if (!in_array($from->user_id, $theirFriends)) {
-                    $theirFriends[] = $from->user_id;
-                    $this->pdo->prepare("UPDATE users SET friends = ? WHERE id = ?")->execute([json_encode($theirFriends), $senderId]);
-                }
+                // Функция для безопасного добавления друга (приводим всё к int)
+                $addFriend = function($userId, $friendId) {
+                    $stmt = $this->pdo->prepare("SELECT friends FROM users WHERE id = ?");
+                    $stmt->execute([$userId]);
+                    $friendsJson = $stmt->fetchColumn();
+                    
+                    $friends = [];
+                    if ($friendsJson) {
+                        $decoded = json_decode($friendsJson, true);
+                        if (is_array($decoded)) {
+                            $friends = array_map('intval', $decoded); 
+                        }
+                    }
+                    
+                    if (!in_array((int)$friendId, $friends)) {
+                        $friends[] = (int)$friendId;
+                        $newJson = json_encode(array_values($friends));
+                        $upd = $this->pdo->prepare("UPDATE users SET friends = ? WHERE id = ?");
+                        $upd->execute([$newJson, $userId]);
+                        echo "Добавили друга $friendId пользователю $userId\n";
+                    }
+                };
+
+                // 1. Добавляем отправителя в список того, кто принял заявку (себе)
+                $addFriend($from->user_id, $senderId);
+                
+                // 2. Добавляем того, кто принял, в список отправителя
+                $addFriend($senderId, $from->user_id);
+
+                // 3. УВЕДОМЛЯЕМ ТОГО, КТО ПРИНЯЛ (чтобы у него обновился список друзей)
+                $from->send(json_encode([
+                    'type' => 'friend_list_updated'
+                ]));
+                echo "Уведомление об обновлении списка друзей отправлено пользователю {$from->user_id}\n";
+
             } else {
                 $this->pdo->prepare("UPDATE friend_requests SET status = 'rejected' WHERE id = ?")->execute([$requestId]);
+                echo "Заявка отклонена\n";
             }
 
-            // Уведомляем отправителя о результате
+            // 4. Уведомляем отправителя о результате (чтобы у него тоже обновился список)
             if (isset($this->users[$senderId])) {
                 $this->users[$senderId]->send(json_encode([
                     'type' => 'request_handled',
@@ -135,10 +178,14 @@ if (($data['type'] ?? '') === 'handle_request') {
                     'action' => $action,
                     'by_user_id' => $from->user_id
                 ]));
+                echo "Уведомление отправлено отправителю $senderId\n";
             }
+        } else {
+            echo "ОШИБКА: Заявка с ID $requestId не найдена в БД для получателя {$from->user_id}\n";
         }
     } catch (Exception $e) {
         error_log("Handle request error: " . $e->getMessage());
+        echo "PHP ERROR: " . $e->getMessage() . "\n";
     }
     return;
 }

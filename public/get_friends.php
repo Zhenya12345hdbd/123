@@ -7,7 +7,6 @@ require 'auth.php';
 $me = requireAuth();
 
 try {
-    // 1. Получаем список ID друзей текущего пользователя
     $stmt = $pdo->prepare("SELECT friends FROM users WHERE id = ?");
     $stmt->execute([$me]);
     $row = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -19,8 +18,9 @@ try {
         exit;
     }
 
-    // 2. Делаем запрос, чтобы получить данные этих друзей
-    // Используем плейсхолдеры для безопасности
+    // ВАЖНО: приводим все ID к числу, чтобы PDO не отправлял их как строки
+    $friendIds = array_map('intval', $friendIds); 
+
     $inQuery = implode(',', array_fill(0, count($friendIds), '?'));
     $stmt = $pdo->prepare("SELECT id, first_name, last_name, avatar_path FROM users WHERE id IN ($inQuery)");
     $stmt->execute($friendIds);
