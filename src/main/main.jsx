@@ -1,5 +1,5 @@
 import './main.css';
-import { useRef, useState, useMemo } from 'react';
+import { useRef, useState, useMemo, useEffect } from 'react';
 
 import Sidebar from './form/Sidebar';
 import MessageInput from './form/MessageInput';
@@ -14,7 +14,7 @@ import { usePendingFiles } from './hooks/usePendingFiles';
 import { useChatRooms } from './hooks/useChatRooms';
 import { useChatHistory } from './hooks/useChatHistory';
 import { useFriends } from './hooks/useFriends';
-
+import { fetchFriendRequests } from './api/users';
 import { uploadImage } from './api/upload';
 
 function Main({ onLogout }) {
@@ -58,7 +58,19 @@ function Main({ onLogout }) {
     loadOlder,
   } = useChatHistory(currentUser);
 
-  // 1. Сначала вызываем useWebSocket и получаем send
+  useEffect(() => {
+    const loadRequests = async () => {
+      try {
+        const data = await fetchFriendRequests();
+        setFriendRequests(data);
+      } catch (err) {
+        console.error('Ошибка загрузки заявок:', err);
+      }
+    };
+    if (currentUser) {
+      loadRequests();
+    }
+  }, [currentUser]);
   const { isConnected, send } = useWebSocket({
     currentUser,
     activeRoomIdRef,
