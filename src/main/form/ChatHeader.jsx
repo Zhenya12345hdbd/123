@@ -25,6 +25,7 @@ function ChatHeader({
 
   const handleInputChange = (e) => {
     const value = e.target.value;
+    setShowRequests(false)
     setQuery(value);
     if (typeof onSearch === 'function') {
       onSearch(value);
@@ -48,6 +49,7 @@ function ChatHeader({
     onClientClick(user.id, `${user.first_name} ${user.last_name}`);
     setQuery('');
     clearSearch();
+    
   };
 
   return (
@@ -80,7 +82,7 @@ function ChatHeader({
         {/* Иконка колокольчика с заявками */}
         <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
           
-         {showRequests && friendRequests?.length > 0 && (
+         {showRequests===true && friendRequests?.length > 0 && (
             <div className="friend-requests-dropdown">
               <h4>Заявки в друзья</h4>
               {friendRequests.map(req => (
@@ -101,7 +103,11 @@ function ChatHeader({
             src={ding} 
             alt="Ding" 
             className="small_img pointer"
-            onClick={() => setShowRequests(!showRequests)} // <-- Открываем/закрываем
+             onClick={() => {
+                setShowRequests(!showRequests);
+                setQuery(''); // <-- Очищаем поиск при открытии заявок
+                clearSearch(); // <-- Сбрасываем результаты поиска
+  }}  // <-- Открываем/закрываем
           />
           {/* Красная точка, если есть заявки */}
           {friendRequests?.length > 0 && !showRequests && (

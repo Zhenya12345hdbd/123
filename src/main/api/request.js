@@ -57,7 +57,39 @@ if (url.includes('delete_account.php')) {
   return { success: true };
 }
   if (url.includes('get_friends.php')) return MOCK_FRIENDS;
-
+if (url.includes('get_friend_requests.php')) {
+  // Возвращаем фейковую заявку, чтобы проверить, как выглядит точка
+  return [
+    {
+      request_id: 999,
+      sender_id: 11,
+      sender_name: 'Маша Машина',
+      sender_avatar: null,
+      type: 'new_friend_request'
+    },
+    {
+      request_id: 999,
+      sender_id: 11,
+      sender_name: 'Маша Машина',
+      sender_avatar: null,
+      type: 'new_friend_request'
+    },
+    {
+      request_id: 999,
+      sender_id: 11,
+      sender_name: 'Маша Машина',
+      sender_avatar: null,
+      type: 'new_friend_request'
+    },
+    {
+      request_id: 999,
+      sender_id: 11,
+      sender_name: 'Маша Машина',
+      sender_avatar: null,
+      type: 'new_friend_request'
+    }
+  ];
+}
   // --- 2. Остальные эндпоинты ---
   if (url.includes('get_unread_counts.php')) return MOCK_UNREAD;
   if (url.includes('get_history.php'))       return MOCK_HISTORY;
@@ -65,7 +97,8 @@ if (url.includes('delete_account.php')) {
   if (url.includes('login.php'))             return MOCK_LOGIN;
   if (url.includes('register.php'))          return MOCK_REGISTER;
   if (url.includes('logout.php'))            return { success: true };
-  if (url.includes('upload.php'))            return MOCK_UPLOAD;
+  if (url.includes('upload.php'))    
+            return MOCK_UPLOAD;
 
   throw new Error(`[mock] Нет обработчика для ${url}`);
 }

@@ -2,9 +2,8 @@ import { useState } from 'react';
 import '../main.css';
 import settings from '../image/settings.png';
 import userPlaceholder from '../image/photo_user.avif';
-import { removeFriend } from '../api/users';
-import delet from '../image/delete.png';
 import { deleteAccount } from '../api/users';
+import UserCard from './userCard';
 
 function Sidebar({
   onLogout,
@@ -13,46 +12,28 @@ function Sidebar({
   onClientClick,
   activeChatId,
   unreadCounts,
-  friends = [],       // <-- берем из пропсов
-  loadFriends,        // <-- чтобы обновить после удаления
+  friends = [],
   isLoadingFriends,
-  onRemoveFriend,   // <-- флаг загрузки
+  onRemoveFriend,
 }) {
   const [searchTerm, setSearchTerm] = useState('');
 
   const handleDeleteAccount = async () => {
-  const isConfirmed = window.confirm(
-    'Вы уверены, что хотите удалить аккаунт? Вся ваша переписка будет безвозвратно удалена.'
-  );
-  
-  if (!isConfirmed) return;
+    const isConfirmed = window.confirm(
+      'Вы уверены, что хотите удалить аккаунт? Вся ваша переписка будет безвозвратно удалена.'
+    );
+    if (!isConfirmed) return;
 
-  try {
-    await deleteAccount();
-    
-    // Очищаем хранилище и выходим
-    localStorage.removeItem('chat_user');
-    localStorage.removeItem('chat_token');
-    
-    // Если есть пропс onLogout (из App.js) — вызываем его, чтобы перекинуть на экран входа
-    if (onLogout) onLogout(); 
-    
-  } catch (err) {
-    console.error(err);
-    alert('Не удалось удалить аккаунт. Попробуйте позже.');
-  }
-};
-
- const handleRemoveFriend = (e, friendId, first_name, last_name) => {
-  e.stopPropagation();
-  
-  if (!window.confirm(`Удалить ${first_name} ${last_name} из друзей?`)) return;
-
-  // Вызываем функцию из main.jsx (она отправит WebSocket-сообщение)
-  if (onRemoveFriend) {
-    onRemoveFriend(friendId);
-  }
-};
+    try {
+      await deleteAccount();
+      localStorage.removeItem('chat_user');
+      localStorage.removeItem('chat_token');
+      if (onLogout) onLogout(); 
+    } catch (err) {
+      console.error(err);
+      alert('Не удалось удалить аккаунт. Попробуйте позже.');
+    }
+  };
 
   const filteredFriends = friends.filter((user) => {
     const fullName = `${user.first_name} ${user.last_name}`.toLowerCase();
@@ -120,27 +101,17 @@ function Sidebar({
               const isActive = String(u.id) === String(activeChatId);
               const count = unreadCounts[u.id] || 0;
 
+              // Используем наш отдельный компонент
               return (
-                <div
+                <UserCard
                   key={u.id}
-                  className={`user_page ${isActive ? 'user_page_active' : ''}`}
-                >
-                  <div className={`tochka ${isUserOnline ? 'online' : 'offline'}`} />
-                  <img src={u.avatar_path || userPlaceholder} className="photo_user" alt={u.first_name} />
-                  <div className="user_info">
-                    <p className="name_full" onClick={() => onClientClick(u.id, `${u.first_name} ${u.last_name}`)}>
-                      {u.first_name} {u.last_name}
-                    </p>
-                    <div className='delete'>
-                      <img 
-                        src={delet} 
-                        onClick={(e) => handleRemoveFriend(e, u.id, u.first_name, u.last_name)} 
-                        alt="delete" 
-                      />
-                    </div>
-                    <div className="entered_message">{count > 0 ? count : ''}</div>
-                  </div>
-                </div>
+                  u={u}
+                  isUserOnline={isUserOnline}
+                  isActive={isActive}
+                  count={count}
+                  onClientClick={onClientClick}
+                  onRemoveFriend={onRemoveFriend}
+                />
               );
             })
           )}
