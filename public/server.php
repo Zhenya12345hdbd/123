@@ -107,7 +107,71 @@ if (($data['type'] ?? '') === 'send_request') {
     }
     return;
 }
-// === ОТВЕТ НА ЗАЯВКУ (ПРИНЯТЬ/ОТКЛОНИТЬ) ===
+// === ПЕРЕСЛАТЬ СООБЩЕНИЕ ===
+if (($data['type'] ?? '') === 'forward_message') {
+    $targetId = (int)($data['target_user_id'] ?? 0);
+    $original = $data['original_message'] ?? null;
+
+    if (!$targetId || !$original || !$from->user_id) return;
+
+    try {
+        // 1. Ищем или создаем комнату
+        $min = min($from->user_id, $targetId);
+        $max = max($from->user_id, $targetId);
+
+        $stmt = $this->pdo->prepare("SELECT id FROM rooms WHERE user1_id = ? AND user2_id = ?");
+        $stmt->execute([$min, $max]);
+        $room = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$room) {
+            $stmt = $this->pdo->prepare("INSERT INTO rooms (user1_id, user2_id) VALUES (?, ?)");
+            $stmt->execute([$min, $max]);
+            $roomId = (int)$this->pdo->lastInsertId();
+        } else {
+            $roomId = (int)$room['id'];
+        }
+
+        // 2. Готовим данные для вставки
+        $text = $original['text'] ?? null;
+        $filePaths = $original['file_paths'] ? json_encode($original['file_paths']) : null;
+        
+        // Добавляем пометку "Переслано", если хочешь
+        $forwardedText = ($text ? "Переслано:\n" . $text : null);
+
+        // 3. Вставляем в БД
+        $stmt = $this->pdo->prepare("INSERT INTO messages (user_id, to_user_id, room_id, text, file_paths) VALUES (?, ?, ?, ?, ?)");
+        $stmt->execute([$from->user_id, $targetId, $roomId, $forwardedText, $filePaths]);
+
+        $messageId = (int)$this->pdo->lastInsertId();
+
+        // 4. Формируем payload для получателя
+        $payload = json_encode([
+            'type'        => 'file_batch_with_text', // Используем этот тип, т.к. может быть и файл
+            'id'          => $messageId,
+            'from'        => $from->user_id,
+            'to'          => $targetId,
+            'room_id'     => $roomId,
+            'username'    => $from->username,
+            'text'        => $forwardedText,
+            'file_paths'  => $original['file_paths'] ?? null,
+            'time'        => date('H:i'),
+            'avatar_path' => $from->avatar_path,
+            'is_read'     => 0,
+        ]);
+
+        // Отправляем получателю (если онлайн)
+        if (isset($this->users[$targetId])) {
+            $this->users[$targetId]->send($payload);
+        }
+        // Отправляем себе (чтобы сообщение появилось у нас)
+        $from->send($payload);
+
+    } catch (Exception $e) {
+        error_log("Forward error: " . $e->getMessage());
+        $from->send(json_encode(['type' => 'error', 'text' => 'Ошибка пересылки']));
+    }
+    return;
+}
 // === УДАЛЕНИЕ ИЗ ДРУЗЕЙ ===
 if (($data['type'] ?? '') === 'remove_friend') {
     $targetId = (int)($data['target_id'] ?? 0);

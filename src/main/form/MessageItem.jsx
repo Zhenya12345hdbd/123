@@ -37,18 +37,18 @@ function MessageItem({
 
   return (
     <div
-      ref={messageRef}
+      
       className={`${isSystem ? 'system_message' : 'message'} ${
         isMyMessage ? 'message-right' : 'message-left'
       }`}
-      {...longPressProps}
+       
       style={{ userSelect: 'none' }} // Отключаем выделение текста при долгом нажатии
     >
       {!isMyMessage && !isSystem && (
         <img src={msg.avatar_path || userPlaceholder} alt="User" className="photo_user" />
       )}
 
-      <div className={`message_user ${isMyMessage ? 'message_user_right' : 'message_user_left'}`}>
+      <div  className={`message_user ${isMyMessage ? 'message_user_right' : 'message_user_left'}`} ref={messageRef} {...longPressProps}>
         <div className={`user_date ${isMyMessage ? 'user_date_right' : 'user_date_left'}`}>
           {!isSystem && (
             <div>

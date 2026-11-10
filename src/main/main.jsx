@@ -1,5 +1,6 @@
 import './main.css';
 import { useRef, useState, useMemo, useEffect } from 'react';
+import ForwardModal from './form/ForwardModal';
 
 import Sidebar from './form/Sidebar';
 import MessageInput from './form/MessageInput';
@@ -24,7 +25,7 @@ function Main({ onLogout }) {
   const [activeRoomId, setActiveRoomId] = useState(null);
   const [activeChatId, setActiveChatId] = useState(null);
   const [activeChatName, setActiveChatName] = useState('');
-  
+  const [messageToForward, setMessageToForward] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
 
   const chatRef = useRef(null);
@@ -57,6 +58,23 @@ function Main({ onLogout }) {
     patchMessage,
     loadOlder,
   } = useChatHistory(currentUser);
+  const handleOpenForward = (msg) => {
+  setMessageToForward(msg);
+};
+
+const handleForwardToFriend = (friendId) => {
+  if (!messageToForward) return;
+
+  // Отправляем через WebSocket
+  send({ 
+    type: 'forward_message', 
+    target_user_id: friendId, 
+    original_message: messageToForward 
+  });
+
+  setMessageToForward(null); // Закрываем модалку
+  alert('Сообщение переслано!');
+};
 
   useEffect(() => {
     const loadRequests = async () => {
@@ -232,6 +250,7 @@ onFriendListUpdated: () => {
           hasMore={hasMore}
           isLoadingMore={isLoadingMore}
           onLoadOlder={loadOlder}
+          onForwardMessage={handleOpenForward}
         />
 
         {activeRoomId && (
@@ -245,6 +264,13 @@ onFriendListUpdated: () => {
             isUploading={isUploading}
           />
         )}
+            {messageToForward && (
+      <ForwardModal
+        friends={friends}
+        onClose={() => setMessageToForward(null)}
+        onForward={handleForwardToFriend}
+      />
+    )}
 
         {!activeRoomId && (
           <div style={{ textAlign: 'center', color: '#888', padding: '20px' }}>

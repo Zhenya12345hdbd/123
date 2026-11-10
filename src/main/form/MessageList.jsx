@@ -4,7 +4,7 @@ import MessageItem from './MessageItem';
 import MessageContextMenu from './MessageContextMenu';
 
 function MessageList({
-  messages, currentUser, chatRef, isConnected, hasMore, isLoadingMore, onLoadOlder,
+  messages, currentUser, chatRef, isConnected, hasMore, isLoadingMore, onLoadOlder,onForwardMessage,
 }) {
   const [zoomedMedia, setZoomedMedia] = useState(null);
   const [contextMenu, setContextMenu] = useState(null);
@@ -14,6 +14,7 @@ function MessageList({
   const prevLastIdRef = useRef(null);
   const prevCountRef = useRef(0);
   const firstRunRef = useRef(true);
+  
 
   const handleMediaClick = (item) => setZoomedMedia(item);
 
@@ -108,7 +109,8 @@ function MessageList({
           x={contextMenu.x}
           y={contextMenu.y}
           onClose={() => setContextMenu(null)}
-          onForward={() => console.log('Переслать:', contextMenu.msg)}
+          onForward={() => onForwardMessage(contextMenu.msg)}
+          
           onDelete={() => console.log('Удалить:', contextMenu.msg.id)}
         />
       )}
