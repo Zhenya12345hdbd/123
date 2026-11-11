@@ -58,23 +58,9 @@ function Main({ onLogout }) {
     patchMessage,
     loadOlder,
   } = useChatHistory(currentUser);
-  const handleOpenForward = (msg) => {
-  setMessageToForward(msg);
-};
+ 
 
-const handleForwardToFriend = (friendId) => {
-  if (!messageToForward) return;
 
-  // Отправляем через WebSocket
-  send({ 
-    type: 'forward_message', 
-    target_user_id: friendId, 
-    original_message: messageToForward 
-  });
-
-  setMessageToForward(null); // Закрываем модалку
-  alert('Сообщение переслано!');
-};
 
   useEffect(() => {
     const loadRequests = async () => {
@@ -209,6 +195,22 @@ onFriendListUpdated: () => {
 
     if (!ok) alert('Нет соединения с чатом');
   };
+  const handleForwardToFriend = (friendId) => {
+  if (!messageToForward) return;
+
+  // Отправляем через WebSocket
+  send({ 
+    type: 'forward_message', 
+    target_user_id: friendId, 
+    original_message: messageToForward 
+  });
+
+  setMessageToForward(null); // Закрываем модалку
+  alert('Сообщение переслано!');
+};
+ const handleOpenForward = (msg) => {
+  setMessageToForward(msg);
+};
 
   return (
     <div className="main">

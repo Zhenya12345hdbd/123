@@ -24,7 +24,7 @@ try {
     }
 
     $fetchLimit = $limit + 1;
-    $sql = "SELECT m.id, m.text, m.created_at, m.user_id AS from_user_id, m.room_id, m.is_read, m.file_paths,
+    $sql = "SELECT m.id, m.text, m.created_at, m.forwarded_time, m.forwarded_from_id, m.user_id AS from_user_id, m.room_id, m.is_read, m.file_paths,
                    u.first_name, u.last_name, u.avatar_path
             FROM messages m JOIN users u ON m.user_id = u.id
             WHERE m.room_id = :room_id";
@@ -42,17 +42,30 @@ try {
     if ($has_more) array_pop($rows);
     $rows = array_reverse($rows);
 
-    $result = array_map(function($row) {
+       $result = array_map(function($row) {
         $filePaths = null;
         if ($row['file_paths']) { $d = json_decode($row['file_paths'], true); if (is_array($d)) $filePaths = $d; }
         $type = !empty($filePaths) ? 'file_batch_with_text' : 'message';
+        
+        // Берем время из created_at
         $time = $row['created_at'] ? date('H:i', strtotime($row['created_at'])) : '00:00';
+        
+        // Если это пересланное сообщение, берем время из forwarded_time
+        $forwardedTime = null;
+        if ($row['forwarded_time']) {
+            $forwardedTime = date('H:i', strtotime($row['forwarded_time']));
+        }
+
         $username = trim(($row['first_name'] ?? '').' '.($row['last_name'] ?? '')) ?: 'Пользователь';
         return [
             'id'=>(int)$row['id'], 'text'=>$row['text'] ?? '', 'type'=>$type,
             'from'=>(int)$row['from_user_id'], 'room_id'=>(int)$row['room_id'],
             'is_read'=>(int)$row['is_read'], 'username'=>$username,
-            'avatar_path'=>$row['avatar_path'], 'time'=>$time, 'file_paths'=>$filePaths,
+            'avatar_path'=>$row['avatar_path'], 
+            'time'=>$time, 
+            'file_paths'=>$filePaths,
+            'forwarded_from_id' => $row['forwarded_from_id'] ? (int)$row['forwarded_from_id'] : null,
+            'forwarded_time'    => $forwardedTime, // <-- Отдаем только ЧЧ:ММ
         ];
     }, $rows);
 

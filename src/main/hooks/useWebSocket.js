@@ -159,6 +159,27 @@ export function useWebSocket({
       }
       return true;
     }
+          if (payload.type === 'forward_message') {
+        const original = payload.original_message;
+        setTimeout(() => {
+          onMessage({
+            id: Date.now(),
+            type: 'file_batch_with_text',
+            from: currentUser.id,
+            to: payload.target_user_id,
+            room_id: activeRoomIdRef.current || 1,
+            username: `${currentUser.first_name} ${currentUser.last_name}`,
+            text: original.text,
+            file_paths: original.file_paths,
+            forwarded_from_id: original.from,
+            forwarded_time: original.time || '12:00', // <-- Добавили время
+            time: new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }),
+            is_read: 0,
+            avatar_path: currentUser.avatar_path,
+          });
+        }, 300);
+        return true;
+      }
 
     const socket = socketRef.current;
     if (socket && socket.readyState === WebSocket.OPEN) {

@@ -59,6 +59,12 @@ function MessageItem({
         </div>
 
         <div className="text_with_arrow">
+            {msg.forwarded_from_id && (
+                <div style={{ fontSize: '12px', color: '#70CC16', marginBottom: '5px', fontStyle: 'italic' }}>
+                    Переслано от пользователя (ID: {msg.forwarded_from_id})
+                    (время: {msg.forwarded_time})
+                </div>
+                )}
           {hasMedia && (
             <ImageGrid media={msg.file_paths} onMediaClick={onMediaClick} />
           )}
