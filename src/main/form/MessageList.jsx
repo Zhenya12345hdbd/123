@@ -118,7 +118,21 @@ function MessageList({
       {/* Твой блок zoomedMedia (я его не менял, вставь свой) */}
       {zoomedMedia && (
         <div className="zoom" onClick={() => setZoomedMedia(null)}>
-           {/* ... твой код ... */}
+          {zoomedMedia.type === 'videos' ? (
+            <video className="zoomed_video" src={zoomedMedia.path} controls autoPlay onClick={(e) => e.stopPropagation()} />
+          ) : zoomedMedia.type === 'audio' ? (
+            <div className="zoomed_audio" onClick={(e) => e.stopPropagation()}>
+              <p>{zoomedMedia.name || 'Аудио'}</p>
+              <audio src={zoomedMedia.path} controls autoPlay />
+            </div>
+          ) : zoomedMedia.type === 'images' ? (
+            <img className="zoomed_img" src={zoomedMedia.path} alt="Zoomed" onClick={(e) => e.stopPropagation()} />
+          ) : zoomedMedia.type === 'files' ? (
+            <div className="zoomed_file" onClick={(e) => e.stopPropagation()}>
+              <p>{zoomedMedia.name || 'Файл'}</p>
+              <a href={zoomedMedia.path} download className="btn_download">Скачать</a>
+            </div>
+          ) : null}
         </div>
       )}
     </>
