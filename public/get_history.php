@@ -24,7 +24,7 @@ try {
     }
 
     $fetchLimit = $limit + 1;
-    $sql = "SELECT m.id, m.text, m.created_at, m.forwarded_time, m.forwarded_from_id, m.user_id AS from_user_id, m.room_id, m.is_read, m.file_paths,
+    $sql = "SELECT m.id, m.text, m.created_at, m.forwarded_time, m.forwarded_from_id,m.forwarded_first_name, m.forwarded_last_name, m.user_id AS from_user_id, m.room_id, m.is_read, m.file_paths,
                    u.first_name, u.last_name, u.avatar_path
             FROM messages m JOIN users u ON m.user_id = u.id
             WHERE m.room_id = :room_id";
@@ -65,7 +65,9 @@ try {
             'time'=>$time, 
             'file_paths'=>$filePaths,
             'forwarded_from_id' => $row['forwarded_from_id'] ? (int)$row['forwarded_from_id'] : null,
-            'forwarded_time'    => $forwardedTime, // <-- Отдаем только ЧЧ:ММ
+            'forwarded_time'    => $forwardedTime,
+            'forwarded_first_name' => $row['forwarded_first_name'],
+            'forwarded_last_name'  => $row['forwarded_last_name'], // <-- Отдаем только ЧЧ:ММ
         ];
     }, $rows);
 

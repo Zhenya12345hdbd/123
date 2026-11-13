@@ -157,9 +157,7 @@ export function useWebSocket({
           });
         }, 1000);
       }
-      return true;
-    }
-          if (payload.type === 'forward_message') {
+       if (payload.type === 'forward_message') {
         const original = payload.original_message;
         setTimeout(() => {
           onMessage({
@@ -178,8 +176,10 @@ export function useWebSocket({
             avatar_path: currentUser.avatar_path,
           });
         }, 300);
-        return true;
       }
+      return true;
+    }
+         
 
     const socket = socketRef.current;
     if (socket && socket.readyState === WebSocket.OPEN) {
