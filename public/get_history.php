@@ -24,10 +24,13 @@ try {
     }
 
     $fetchLimit = $limit + 1;
-    $sql = "SELECT m.id, m.text, m.created_at, m.forwarded_time, m.forwarded_from_id,m.forwarded_first_name, m.forwarded_last_name, m.user_id AS from_user_id, m.room_id, m.is_read, m.file_paths,
-                   u.first_name, u.last_name, u.avatar_path
-            FROM messages m JOIN users u ON m.user_id = u.id
-            WHERE m.room_id = :room_id";
+    $sql = "SELECT m.id, m.text, m.created_at, m.forwarded_time, m.forwarded_from_id, 
+               m.forwarded_first_name, m.forwarded_last_name, 
+               m.user_id AS from_user_id, m.room_id, m.is_read, m.file_paths,
+               u.first_name, u.last_name, u.avatar_path
+        FROM messages m 
+        JOIN users u ON m.user_id = u.id
+        WHERE m.room_id = :room_id";
     if ($beforeId !== null) $sql .= " AND m.id < :before_id";
     $sql .= " ORDER BY m.id DESC LIMIT :limit";
 

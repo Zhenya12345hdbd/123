@@ -177,22 +177,23 @@ if (($data['type'] ?? '') === 'forward_message') {
         echo "УСПЕХ! Сообщение добавлено в БД, ID: $messageId\n";
 
         // 4. Отправляем
-        $payload = json_encode([
-            'type'              => 'file_batch_with_text',
-            'id'                => $messageId,
-            'from'              => $from->user_id,
-            'to'                => $targetId,
-            'room_id'           => $roomId,
-            'username'          => $from->username,
-            'text'              => $text,
-            'file_paths'        => $original['file_paths'] ?? null,
-            'forwarded_from_id' => $originalSenderId,
-            'forwarded_from_name' => $originalSenderName, // <-- ИМЯ ДЛЯ ФРОНТЕНДА
-            'forwarded_time'    => date('H:i', strtotime($originalTime)),
-            'time'              => date('H:i'),
-            'avatar_path'       => $from->avatar_path,
-            'is_read'           => 0,
-        ]);
+       $payload = json_encode([
+    'type'              => 'file_batch_with_text',
+    'id'                => $messageId,
+    'from'              => $from->user_id,
+    'to'                => $targetId,
+    'room_id'           => $roomId,
+    'username'          => $from->username,
+    'text'              => $text,
+    'file_paths'        => $original['file_paths'] ?? null,
+    'forwarded_from_id' => $originalSenderId,
+    'forwarded_first_name' => $originalSenderFirstName, // <-- ДОБАВИТЬ
+    'forwarded_last_name'  => $originalSenderLastName,  // <-- ДОБАВИТЬ
+    'forwarded_time'    => date('H:i', strtotime($originalTime)),
+    'time'              => date('H:i'),
+    'avatar_path'       => $from->avatar_path,
+    'is_read'           => 0,
+]);
 
         if (isset($this->users[$targetId])) {
             $this->users[$targetId]->send($payload);
