@@ -61,11 +61,15 @@ function MessageItem({
         <div className="text_with_arrow">
             {msg.forwarded_from_id && (
                 <div className='forvated_message' >
-                    Переслано от пользователя (ID: {msg.forwarded_first_name}{msg.forwarded_last_name})
-                    (время: {msg.forwarded_time})
+                 <div>
+                    <h2 className='name_user'>{msg.forwarded_first_name} {msg.forwarded_last_name}</h2>  
+                    <h4 className='time'>{msg.forwarded_time}</h4> 
+                 </div>
+                  
                 </div>
                 )}
-          {hasMedia && (
+            <div className={`flex_row ${msg.forwarded_from_id ? 'margin_right' : ''}`}>
+                   {hasMedia && (
             <ImageGrid media={msg.file_paths} onMediaClick={onMediaClick} />
           )}
 
@@ -77,6 +81,8 @@ function MessageItem({
               <span className={`arrow-4-right arrow-4-right_second ${msg.is_read === 1 ? 'arrow-4-right_change_color' : ''}`}></span>
             </div>
           )}
+            </div>
+         
         </div>
       </div>
 

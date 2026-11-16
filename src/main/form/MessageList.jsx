@@ -4,7 +4,7 @@ import MessageItem from './MessageItem';
 import MessageContextMenu from './MessageContextMenu';
 
 function MessageList({
-  messages, currentUser, chatRef, isConnected, hasMore, isLoadingMore, onLoadOlder,onForwardMessage,
+  messages, currentUser, chatRef, isConnected, hasMore, isLoadingMore, onLoadOlder,onForwardMessage,onDeleteMessage
 }) {
   const [zoomedMedia, setZoomedMedia] = useState(null);
   const [contextMenu, setContextMenu] = useState(null);
@@ -111,7 +111,7 @@ function MessageList({
           onClose={() => setContextMenu(null)}
           onForward={() => onForwardMessage(contextMenu.msg)}
           
-          onDelete={() => console.log('Удалить:', contextMenu.msg.id)}
+          onDelete={() => onDeleteMessage(contextMenu.msg.id)}
         />
       )}
 

@@ -36,6 +36,10 @@ export function useChatHistory(currentUser) {
     });
   }, [updateMessages]);
 
+  const removeMessage = useCallback((id) => {
+  updateMessages((prev) => prev.filter((m) => m.id !== id));
+}, [updateMessages]);
+
   const patchMessage = useCallback((id, patch) => {
     updateMessages((prev) =>
       prev.map((m) => (m.id === id ? { ...m, ...patch } : m))
@@ -83,5 +87,6 @@ export function useChatHistory(currentUser) {
     appendMessage,
     patchMessage,
     loadOlder,
+    removeMessage,
   };
 }

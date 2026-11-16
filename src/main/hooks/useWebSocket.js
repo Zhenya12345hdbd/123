@@ -108,7 +108,10 @@ export function useWebSocket({
           onRequestHandled?.(data);
           break;
 
-        // ВОТ ОН, НОВЫЙ КЕЙС:
+        case 'message_deleted':
+          onMessage({ type: 'message_deleted', message_id: data.message_id });
+          break;
+          
         case 'friend_list_updated':
           console.log('СЕРВЕР ОБНОВИЛ СПИСОК ДРУЗЕЙ');
           onFriendListUpdated?.();
@@ -156,27 +159,49 @@ export function useWebSocket({
             request_id: Date.now()
           });
         }, 1000);
+        
       }
+      if (payload.type === 'delete_message') {
+  setTimeout(() => {
+    onMessage({ type: 'message_deleted', message_id: payload.message_id });
+  }, 300);
+  return true;
+}
        if (payload.type === 'forward_message') {
-        const original = payload.original_message;
-        setTimeout(() => {
-          onMessage({
-            id: Date.now(),
-            type: 'file_batch_with_text',
-            from: currentUser.id,
-            to: payload.target_user_id,
-            room_id: activeRoomIdRef.current || 1,
-            username: `${currentUser.first_name} ${currentUser.last_name}`,
-            text: original.text,
-            file_paths: original.file_paths,
-            forwarded_from_id: original.from,
-            forwarded_time: original.time || '12:00', // <-- Добавили время
-            time: new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }),
-            is_read: 0,
-            avatar_path: currentUser.avatar_path,
-          });
-        }, 300);
-      }
+  const original = payload.original_message;
+  
+  // Берем имя из оригинального сообщения (msg.username) или подставляем текущего пользователя
+  const originalSenderName = original.username || `${currentUser.first_name} ${currentUser.last_name}`;
+  
+  // Разделяем имя на части для forwarded_first_name и forwarded_last_name (если нужно)
+  const nameParts = originalSenderName.split(' ');
+  const firstName = nameParts[0] || '';
+  const lastName = nameParts.slice(1).join(' ') || '';
+
+  setTimeout(() => {
+    onMessage({
+      id: Date.now(),
+      type: 'file_batch_with_text',
+      from: currentUser.id,
+      to: payload.target_user_id,
+      room_id: activeRoomIdRef.current || 1,
+      username: `${currentUser.first_name} ${currentUser.last_name}`,
+      text: original.text,
+      file_paths: original.file_paths,
+      
+      // ПЕРЕДАЕМ ИМЯ И ВРЕМЯ, чтобы фронт их увидел
+      forwarded_from_id: original.from,
+      forwarded_first_name: firstName,
+      forwarded_last_name: lastName,
+      forwarded_from_name: originalSenderName, // на случай, если фронт ищет это поле
+      
+      forwarded_time: original.time || '12:00',
+      time: new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }),
+      is_read: 0,
+      avatar_path: currentUser.avatar_path,
+    });
+  }, 300);
+}
       return true;
     }
          

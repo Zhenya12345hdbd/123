@@ -205,6 +205,54 @@ if (($data['type'] ?? '') === 'forward_message') {
     }
     return;
 }
+// === УДАЛЕНИЕ СООБЩЕНИЯ ===
+if (($data['type'] ?? '') === 'delete_message') {
+    $messageId = (int)($data['message_id'] ?? 0);
+    if (!$messageId || !$from->user_id) return;
+
+    try {
+        // 1. Проверяем, что сообщение принадлежит тому, кто его удаляет
+        $stmt = $this->pdo->prepare("SELECT room_id FROM messages WHERE id = ? AND user_id = ?");
+        $stmt->execute([$messageId, $from->user_id]);
+        $msg = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($msg) {
+            $roomId = (int)$msg['room_id'];
+            
+            // 2. Удаляем из БД
+            $this->pdo->prepare("DELETE FROM messages WHERE id = ?")->execute([$messageId]);
+            echo "Сообщение $messageId удалено\n";
+
+            // 3. Узнаем, кто второй участник, чтобы отправить ему команду
+            $stmt = $this->pdo->prepare("SELECT user1_id, user2_id FROM rooms WHERE id = ?");
+            $stmt->execute([$roomId]);
+            $room = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            $payload = json_encode([
+                'type' => 'message_deleted',
+                'message_id' => $messageId,
+                'room_id' => $roomId,
+            ]);
+
+            // Отправляем себе (чтобы сообщение исчезло)
+            $from->send($payload);
+
+            // Отправляем собеседнику (если он онлайн)
+            if ($room) {
+                $user1 = (int)$room['user1_id'];
+                $user2 = (int)$room['user2_id'];
+                $to_id = ($from->user_id === $user1) ? $user2 : $user1;
+
+                if (isset($this->users[$to_id])) {
+                    $this->users[$to_id]->send($payload);
+                }
+            }
+        }
+    } catch (Exception $e) {
+        error_log("Delete message error: " . $e->getMessage());
+    }
+    return;
+}
 // === УДАЛЕНИЕ ИЗ ДРУЗЕЙ ===
 if (($data['type'] ?? '') === 'remove_friend') {
     $targetId = (int)($data['target_id'] ?? 0);

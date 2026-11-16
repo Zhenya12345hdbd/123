@@ -18,6 +18,7 @@ import { useFriends } from './hooks/useFriends';
 import { fetchFriendRequests } from './api/users';
 import { uploadImage } from './api/upload';
 
+
 function Main({ onLogout }) {
   const [onlineUsers, setOnlineUsers] = useState([]);
   const [friendRequests, setFriendRequests] = useState([]); // <-- Заявки в друзья
@@ -56,6 +57,7 @@ function Main({ onLogout }) {
     setRoomId,
     appendMessage,
     patchMessage,
+    removeMessage,
     loadOlder,
   } = useChatHistory(currentUser);
  
@@ -83,6 +85,11 @@ function Main({ onLogout }) {
         patchMessage(data.message_id, { is_read: 1 });
         return;
       }
+       if (data.type === 'message_deleted') {
+        removeMessage(data.message_id);
+    return; 
+  }
+
       appendMessage(data);
     },
     onUnreadIncrement: incrementForUser,
@@ -106,7 +113,6 @@ function Main({ onLogout }) {
   }
 },
 
-// ВОТ ЭТО НУЖНО ДОБАВИТЬ:
 onFriendListUpdated: () => {
   console.log('Сервер сообщил об обновлении списка друзей (для того, кто принял)');
   loadFriends(); // Перезапрашиваем друзей
@@ -120,6 +126,11 @@ onFriendListUpdated: () => {
   };
   const handleRemoveFriend = (friendId) => {
   send({ type: 'remove_friend', target_id: friendId });
+};
+const handleDeleteMessage = (msgId) => {
+  if (window.confirm('Удалить это сообщение?')) {
+    send({ type: 'delete_message', message_id: msgId });
+  }
 };
 
   const handleRequestAction = (requestId, action) => {
@@ -253,6 +264,7 @@ onFriendListUpdated: () => {
           isLoadingMore={isLoadingMore}
           onLoadOlder={loadOlder}
           onForwardMessage={handleOpenForward}
+          onDeleteMessage={handleDeleteMessage}
         />
 
         {activeRoomId && (

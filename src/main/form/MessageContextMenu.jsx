@@ -26,11 +26,11 @@ function MessageContextMenu({ x, y, onClose, onDelete, onForward }) {
         }}
       >
         <div className="context-menu-item" onClick={() => { onForward(); onClose(); }}>
-          📤 Переслать
+          Переслать
         </div>
         
         <div className="context-menu-item" onClick={() => { onDelete(); onClose(); }} style={{ color: '#ff4444' }}>
-          🗑️ Удалить
+          Удалить
         </div>
       </div>
     </>
