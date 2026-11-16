@@ -157,7 +157,7 @@ function MessageInput({
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
                 const text = e.target.value.trim();
-                  setShowEmoji(!showEmoji)
+                  setShowEmoji(false)
                 if (pendingFiles.length > 0) {
                   onImageSend(text);
                   e.target.value = '';

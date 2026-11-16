@@ -38,9 +38,7 @@ function MessageItem({
   return (
     <div
       
-      className={`${isSystem ? 'system_message' : 'message'} ${
-        isMyMessage ? 'message-right' : 'message-left'
-      }`}
+      className={`${isSystem ? 'system_message' : 'message'} ${isMyMessage ? 'message-right' : 'message-left'}`}
        
       style={{ userSelect: 'none' }} // Отключаем выделение текста при долгом нажатии
     >
@@ -60,7 +58,7 @@ function MessageItem({
 
         <div className="text_with_arrow">
             {msg.forwarded_from_id && (
-                <div className='forvated_message' >
+                <div className={`forvated_message ${isMyMessage ? 'margin_right' : 'margin_left'}`}  >
                  <div>
                     <h2 className='name_user'>{msg.forwarded_first_name} {msg.forwarded_last_name}</h2>  
                     <h4 className='time'>{msg.forwarded_time}</h4> 
@@ -68,12 +66,12 @@ function MessageItem({
                   
                 </div>
                 )}
-            <div className={`flex_row ${msg.forwarded_from_id ? 'margin_right' : ''}`}>
+            <div className={`flex_row ${msg.forwarded_from_id ? 'margin_right' : ''} ${isMyMessage ? '' : 'margin_left'} `}>
                    {hasMedia && (
             <ImageGrid media={msg.file_paths} onMediaClick={onMediaClick} />
           )}
 
-          {hasText && <p className="text_message">{msg.text}</p>}
+          {hasText && <p className={`text_message ${isMyMessage ? 'margin_right':''}`} >{msg.text}</p>}
 
           {isMyMessage && (
             <div className="message_arrow arrow-4">
