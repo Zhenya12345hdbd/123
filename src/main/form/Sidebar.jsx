@@ -15,6 +15,7 @@ function Sidebar({
   friends = [],
   isLoadingFriends,
   onRemoveFriend,
+  onCreateGroup,
 }) {
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -77,6 +78,12 @@ function Sidebar({
           <h1>Friends</h1>
           <h1>{friends.length}</h1>
         </div>
+            <button 
+        onClick={onCreateGroup} 
+        style={{ background: '#70CC16', border: 'none', borderRadius: '4px', padding: '5px', cursor: 'pointer', fontSize: '12px' }}
+      >
+        + Группа
+      </button>
 
         <div className="search_user_div">
           <input

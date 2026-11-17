@@ -1,6 +1,7 @@
 import './main.css';
 import { useRef, useState, useMemo, useEffect } from 'react';
 import ForwardModal from './form/ForwardModal';
+import CreateGroupModal from './form/CreateGroupModal';
 
 import Sidebar from './form/Sidebar';
 import MessageInput from './form/MessageInput';
@@ -28,7 +29,7 @@ function Main({ onLogout }) {
   const [activeChatName, setActiveChatName] = useState('');
   const [messageToForward, setMessageToForward] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
-
+  const [showCreateGroup, setShowCreateGroup] = useState(false);
   const chatRef = useRef(null);
   const activeRoomIdRef = useRef(null);
 
@@ -222,6 +223,23 @@ const handleDeleteMessage = (msgId) => {
  const handleOpenForward = (msg) => {
   setMessageToForward(msg);
 };
+const handleCreateGroup = async (name, memberIds) => {
+  try {
+    const res = await fetch('create_group.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, members: memberIds })
+    });
+    const data = await res.json();
+    if (data.success) {
+      setShowCreateGroup(false);
+      alert('Группа создана!');
+      // Тут можно сразу открыть новую группу: handleClientClick(data.room_id, name)
+    }
+  } catch (err) {
+    console.error(err);
+  }
+};
 
   return (
     <div className="main">
@@ -236,6 +254,7 @@ const handleDeleteMessage = (msgId) => {
         loadFriends={loadFriends}
         isLoadingFriends={isLoadingFriends}
         onRemoveFriend={handleRemoveFriend}
+        onCreateGroup={() => setShowCreateGroup(true)}
       />
 
       <div className="main_big">
@@ -291,6 +310,14 @@ const handleDeleteMessage = (msgId) => {
             Нажмите на пользователя слева, чтобы начать приватный чат
           </div>
         )}
+
+         {showCreateGroup && (
+        <CreateGroupModal 
+          friends={friends} 
+          onClose={() => setShowCreateGroup(false)} 
+          onCreate={handleCreateGroup} 
+        />
+      )}
       </div>
     </div>
   );
