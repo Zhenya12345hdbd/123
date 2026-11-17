@@ -461,7 +461,6 @@ letter-spacing: 0px;
     display: flex;
     flex-direction: column;
     margin-top: 5px;
-    align-items: center;
    
 }
 
@@ -474,9 +473,11 @@ letter-spacing: 0px;
 }
 .margin_right{
 margin-right: 20px;
+justify-content:flex-end;
 }
 .margin_left{
 margin-left: 20px;
+justify-content:flex-start;
 }
 
 .message_user{
@@ -1178,7 +1179,6 @@ letter-spacing: 0px;
 
 .forward-item {
   display: flex;
-  align-items: center;
   gap: 10px;
   padding: 10px;
   border-radius: 8px;
@@ -1199,8 +1199,6 @@ letter-spacing: 0px;
 .forvated_message{
     font-size: 12px;
     display: flex;
-    align-self: flex-end;
-    align-items: center;
      margin-bottom: 5px;
      gap: 15px;
      margin-top: 10px;
