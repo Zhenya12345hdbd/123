@@ -18,6 +18,7 @@ import { useChatHistory } from './hooks/useChatHistory';
 import { useFriends } from './hooks/useFriends';
 import { fetchFriendRequests } from './api/users';
 import { uploadImage } from './api/upload';
+import { useGroups } from './hooks/useGroups';
 
 
 function Main({ onLogout }) {
@@ -61,6 +62,7 @@ function Main({ onLogout }) {
     removeMessage,
     loadOlder,
   } = useChatHistory(currentUser);
+  const { groups, loadGroups, isLoadingGroups } = useGroups(currentUser);
  
 
 
@@ -142,16 +144,17 @@ const handleDeleteMessage = (msgId) => {
 
   const { openRoom } = useChatRooms({ currentUser, activeRoomIdRef });
 
-  const handleClientClick = async (userId, name) => {
+ const handleClientClick = async (userId, name, isGroup = false) => {
     await openRoom({
       userId,
       name,
+      isGroup,
       onOpen: ({ roomId, chatId, chatName }) => {
         setActiveRoomId(roomId);
         setActiveChatId(chatId);
         setActiveChatName(chatName);
         setRoomId(roomId);
-        clearForUser(userId);
+        clearForUser(isGroup ? `group_${userId}` : userId);
       },
       onLoaded: (msgs, more) => setInitial(msgs, more),
     });
@@ -233,6 +236,7 @@ const handleCreateGroup = async (name, memberIds) => {
     const data = await res.json();
     if (data.success) {
       setShowCreateGroup(false);
+      loadGroups();
       alert('Группа создана!');
       // Тут можно сразу открыть новую группу: handleClientClick(data.room_id, name)
     }
@@ -255,6 +259,8 @@ const handleCreateGroup = async (name, memberIds) => {
         isLoadingFriends={isLoadingFriends}
         onRemoveFriend={handleRemoveFriend}
         onCreateGroup={() => setShowCreateGroup(true)}
+        groups={groups}
+        isLoadingGroups={isLoadingGroups}
       />
 
       <div className="main_big">

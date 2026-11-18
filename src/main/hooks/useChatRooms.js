@@ -3,29 +3,31 @@ import { createRoom, fetchHistory } from '../api/rooms';
 
 export function useChatRooms({ activeRoomIdRef }) {
   const openRoom = useCallback(
-    async ({ userId, name, onOpen, onLoaded }) => {
+    async ({ userId, name, isGroup = false, onOpen, onLoaded }) => {
       try {
-        // 1. Передаем ТОЛЬКО id собеседника (твой id сервер/мок берет из сессии)
-        const data = await createRoom(userId); 
-        
-        if (!data || !data.room_id) return null;
+        let roomId = userId; // Для группы userId — это уже готовый room_id
 
-        activeRoomIdRef.current = data.room_id;
-        onOpen({ roomId: data.room_id, chatId: userId, chatName: name });
+        // Если это личный чат, создаем или получаем комнату на сервере
+        if (!isGroup) {
+          const data = await createRoom(userId);
+          if (!data || !data.room_id) return null;
+          roomId = data.room_id;
+        }
 
-        // 2. Передаем room_id и объект настроек (без userId)
-        const hist = await fetchHistory(data.room_id, { limit: 10 });
-        
-        // 3. Загружаем историю
+        activeRoomIdRef.current = roomId;
+        onOpen({ roomId, chatId: userId, chatName: name });
+
+        // Загружаем историю сообщений по roomId
+        const hist = await fetchHistory(roomId, { limit: 10 });
         onLoaded(hist.messages || [], !!hist.has_more);
 
-        return data.room_id;
+        return roomId;
       } catch (e) {
         console.error('Ошибка при открытии комнаты:', e);
         return null;
       }
     },
-    [activeRoomIdRef] // currentUser больше не нужен
+    [activeRoomIdRef]
   );
 
   return { openRoom };

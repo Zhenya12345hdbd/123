@@ -54,7 +54,8 @@ export function useWebSocket({
         onMessage(data);
         if (fromOther) markRead(data.room_id);
       } else if (fromOther) {
-        onUnreadIncrement(data.from);
+        const targetKey = data.is_group ? `group_${data.room_id}` : data.from;
+        onUnreadIncrement(targetKey);
       }
     };
 

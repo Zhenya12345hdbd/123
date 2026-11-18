@@ -423,6 +423,7 @@ if (($data['type'] ?? '') === 'message' && isset($data['room_id'])) {
         'time'        => date('H:i'),
         'avatar_path' => $from->avatar_path,
         'is_read'     => 0,
+        'is_group' => (bool)$room['is_group']
     ]);
 
     if ($isGroup) {
@@ -652,6 +653,7 @@ if (($data['type'] ?? '') === 'message' && isset($data['room_id'])) {
                 'time'        => date('H:i'),
                 'avatar_path' => $from->avatar_path,
                 'is_read'     => 0,
+                'is_group' => (bool)$room['is_group'],
             ]);
 
             if (isset($this->users[$to_id])) {

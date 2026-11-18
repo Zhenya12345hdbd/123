@@ -5,6 +5,7 @@ import userPlaceholder from '../image/photo_user.avif';
 import { deleteAccount } from '../api/users';
 import UserCard from './userCard';
 
+
 function Sidebar({
   onLogout,
   onlineUsers,
@@ -16,6 +17,8 @@ function Sidebar({
   isLoadingFriends,
   onRemoveFriend,
   onCreateGroup,
+  groups = [],
+  isLoadingGroups,
 }) {
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -60,7 +63,7 @@ function Sidebar({
   return (
     <div className="main_small">
       <div className="main_small_tags">
-        <h1>Friends list <span className="tag_list">&#8743;</span></h1>
+        <h1>Friends list <span className="tag_list">∧</span></h1>
         <img src={settings} alt="Settings" />
       </div>
 
@@ -73,18 +76,46 @@ function Sidebar({
         </div>
       </div>
 
+      <div className="groups_section">
+        <div className="friends_num">
+          <h1>Groups</h1>
+          <button onClick={onCreateGroup} className="add_group_btn">+</button>
+        </div>
+        <div className="list">
+          {isLoadingGroups ? (
+            <p>Загрузка...</p>
+          ) : groups.length === 0 ? (
+            <p style={{ color: '#888', fontSize: 12 }}>Нет групп</p>
+          ) : (
+            groups.map((g) => {
+              const count = unreadCounts[`group_${g.id}`] || 0;
+              const isActive = String(g.id) === String(activeChatId);
+
+              return (
+                <div 
+                  key={g.id} 
+                  className={`user_page ${isActive ? 'user_page_active' : ''}`}
+                  onClick={() => onClientClick(g.id, g.name, true)}
+                >
+                  <div className="group_avatar">👥</div>
+                  <div className="user_info">
+                    <p className="name_full">{g.name}</p>
+                    <span style={{ fontSize: '11px', color: '#888' }}>{g.members_count} участников</span>
+                    <div className="entered_message">{count > 0 ? count : ''}</div>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      </div>
+
       <div className="friends">
         <div className="friends_num">
           <h1>Friends</h1>
           <h1>{friends.length}</h1>
         </div>
-            <button 
-        onClick={onCreateGroup} 
-        style={{ background: '#70CC16', border: 'none', borderRadius: '4px', padding: '5px', cursor: 'pointer', fontSize: '12px' }}
-      >
-        + Группа
-      </button>
-
+           
         <div className="search_user_div">
           <input
             type="text"
@@ -108,7 +139,6 @@ function Sidebar({
               const isActive = String(u.id) === String(activeChatId);
               const count = unreadCounts[u.id] || 0;
 
-              // Используем наш отдельный компонент
               return (
                 <UserCard
                   key={u.id}

@@ -15,12 +15,29 @@ if ($limit < 1 || $limit > 50) $limit = 10;
 
 try {
     // проверка доступа
-    $stmt = $pdo->prepare("SELECT user1_id, user2_id FROM rooms WHERE id = ?");
+    $stmt = $pdo->prepare("SELECT user1_id, user2_id, is_group FROM rooms WHERE id = ?");
     $stmt->execute([$room_id]);
     $room = $stmt->fetch(PDO::FETCH_ASSOC);
-    if (!$room) { http_response_code(404); echo json_encode(['error'=>'Комната не найдена']); exit; }
-    if ($me !== (int)$room['user1_id'] && $me !== (int)$room['user2_id']) {
-        http_response_code(403); echo json_encode(['error'=>'Нет доступа']); exit;
+    if (!$room) {
+        http_response_code(404);
+        echo json_encode(['error' => 'Комната не найдена'], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
+    if ((int)$room['is_group'] === 1) {
+        $stmtMember = $pdo->prepare("SELECT 1 FROM room_members WHERE room_id = ? AND user_id = ?");
+        $stmtMember->execute([$room_id, $me]);
+        if (!$stmtMember->fetch()) {
+            http_response_code(403);
+            echo json_encode(['error' => 'Нет доступа к группе'], JSON_UNESCAPED_UNICODE);
+            exit;
+        }
+    } else {
+        if ($me !== (int)$room['user1_id'] && $me !== (int)$room['user2_id']) {
+            http_response_code(403);
+            echo json_encode(['error' => 'Нет доступа'], JSON_UNESCAPED_UNICODE);
+            exit;
+        }
     }
 
     $fetchLimit = $limit + 1;
@@ -45,7 +62,7 @@ try {
     if ($has_more) array_pop($rows);
     $rows = array_reverse($rows);
 
-       $result = array_map(function($row) {
+    $result = array_map(function($row) {
         $filePaths = null;
         if ($row['file_paths']) { $d = json_decode($row['file_paths'], true); if (is_array($d)) $filePaths = $d; }
         $type = !empty($filePaths) ? 'file_batch_with_text' : 'message';
@@ -70,7 +87,7 @@ try {
             'forwarded_from_id' => $row['forwarded_from_id'] ? (int)$row['forwarded_from_id'] : null,
             'forwarded_time'    => $forwardedTime,
             'forwarded_first_name' => $row['forwarded_first_name'],
-            'forwarded_last_name'  => $row['forwarded_last_name'], // <-- Отдаем только ЧЧ:ММ
+            'forwarded_last_name'  => $row['forwarded_last_name'],
         ];
     }, $rows);
 
