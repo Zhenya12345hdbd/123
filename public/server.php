@@ -109,30 +109,47 @@ if (($data['type'] ?? '') === 'send_request') {
     return;
 }
 if (($data['type'] ?? '') === 'forward_message') {
-    $targetId = (int)($data['target_user_id'] ?? 0);
-    $original = $data['original_message'] ?? null;
+    // === 1. ИЗМЕНЕНО: ПРИНИМАЕМ И ЛИЧНЫЙ ID, И ID ГРУППЫ ===
+    $isGroup      = !empty($data['is_group']);
+    $targetId     = (int)($data['target_user_id'] ?? 0);
+    $targetRoomId = (int)($data['target_room_id'] ?? 0);
+    $original     = $data['original_message'] ?? null;
 
-    if (!$targetId || !$original || !$from->user_id) return;
+    if ((!$targetId && !$targetRoomId) || !$original || !$from->user_id) return;
 
     try {
-        // 1. Комната
-        $min = min($from->user_id, $targetId);
-        $max = max($from->user_id, $targetId);
-        $stmt = $this->pdo->prepare("SELECT id FROM rooms WHERE user1_id = ? AND user2_id = ?");
-        $stmt->execute([$min, $max]);
-        $room = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if (!$room) {
-            $stmt = $this->pdo->prepare("INSERT INTO rooms (user1_id, user2_id) VALUES (?, ?)");
-            $stmt->execute([$min, $max]);
-            $roomId = (int)$this->pdo->lastInsertId();
+        // === 2. ИЗМЕНЕНО: ОПРЕДЕЛЯЕМ КОМНАТУ (ГРУППА ИЛИ ЛИЧКА) ===
+        if ($isGroup && $targetRoomId) {
+            // Проверяем, что отправитель состоит в целевой группе
+            $stmtMember = $this->pdo->prepare("SELECT 1 FROM room_members WHERE room_id = ? AND user_id = ?");
+            $stmtMember->execute([$targetRoomId, $from->user_id]);
+            if (!$stmtMember->fetch()) {
+                $from->send(json_encode(['type' => 'error', 'text' => 'Нет доступа к группе']));
+                return;
+            }
+            $roomId   = $targetRoomId;
+            $toUserId = null; // В группе нет одного конкретного получателя
         } else {
-            $roomId = (int)$room['id'];
-        }
+            $min = min($from->user_id, $targetId);
+            $max = max($from->user_id, $targetId);
+            $stmt = $this->pdo->prepare("SELECT id FROM rooms WHERE is_group = 0 AND user1_id = ? AND user2_id = ?");
+            $stmt->execute([$min, $max]);
+            $room = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        // 2. Готовим данные (ВОТ ЭТОТ БЛОК ДОЛЖЕН БЫТЬ ДО INSERT!)
+            if (!$room) {
+                $stmt = $this->pdo->prepare("INSERT INTO rooms (user1_id, user2_id, is_group) VALUES (?, ?, 0)");
+                $stmt->execute([$min, $max]);
+                $roomId = (int)$this->pdo->lastInsertId();
+            } else {
+                $roomId = (int)$room['id'];
+            }
+            $toUserId = $targetId;
+        }
+        // ==========================================================
+
+        // Готовим данные
         $text = $original['text'] ?? null;
-        $filePaths = $original['file_paths'] ? json_encode($original['file_paths']) : null;
+        $filePaths = !empty($original['file_paths']) ? json_encode($original['file_paths']) : null;
         $originalSenderId = $original['from'] ?? $from->user_id;
 
         // Получаем имя и фамилию
@@ -141,7 +158,6 @@ if (($data['type'] ?? '') === 'forward_message') {
         $originalUser = $stmt->fetch(PDO::FETCH_ASSOC);
         $originalSenderFirstName = $originalUser ? $originalUser['first_name'] : 'Пользователь';
         $originalSenderLastName = $originalUser ? $originalUser['last_name'] : '';
-        $originalSenderName = $originalSenderFirstName . ' ' . $originalSenderLastName; // <-- ДОБАВИТЬ ЭТУ СТРОКУ
 
         // Время
         $originalTimeStr = $original['time'] ?? null;
@@ -151,14 +167,14 @@ if (($data['type'] ?? '') === 'forward_message') {
             $originalTime = date('Y-m-d H:i:s');
         }
 
-        // 3. Вставляем в БД
+        // === 3. ИЗМЕНЕНО: ВСТАВЛЯЕМ $toUserId (NULL ДЛЯ ГРУППЫ) ===
         $stmt = $this->pdo->prepare("
             INSERT INTO messages (user_id, to_user_id, room_id, text, file_paths, forwarded_from_id, forwarded_time, forwarded_first_name, forwarded_last_name) 
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         ");
         $result = $stmt->execute([
             $from->user_id, 
-            $targetId, 
+            $toUserId, 
             $roomId, 
             $text, 
             $filePaths, 
@@ -176,35 +192,50 @@ if (($data['type'] ?? '') === 'forward_message') {
         $messageId = (int)$this->pdo->lastInsertId();
         echo "УСПЕХ! Сообщение добавлено в БД, ID: $messageId\n";
 
-        // 4. Отправляем
-       $payload = json_encode([
-    'type'              => 'file_batch_with_text',
-    'id'                => $messageId,
-    'from'              => $from->user_id,
-    'to'                => $targetId,
-    'room_id'           => $roomId,
-    'username'          => $from->username,
-    'text'              => $text,
-    'file_paths'        => $original['file_paths'] ?? null,
-    'forwarded_from_id' => $originalSenderId,
-    'forwarded_first_name' => $originalSenderFirstName, // <-- ДОБАВИТЬ
-    'forwarded_last_name'  => $originalSenderLastName,  // <-- ДОБАВИТЬ
-    'forwarded_time'    => date('H:i', strtotime($originalTime)),
-    'time'              => date('H:i'),
-    'avatar_path'       => $from->avatar_path,
-    'is_read'           => 0,
-]);
+        // === 4. ИЗМЕНЕНО: ДОБАВЛЯЕМ is_group В PAYLOAD И РАССЫЛАЕМ ПО УЧАСТНИКАМ ===
+        $payload = json_encode([
+            'type'                 => 'file_batch_with_text',
+            'id'                   => $messageId,
+            'from'                 => $from->user_id,
+            'to'                   => $toUserId,
+            'room_id'              => $roomId,
+            'username'             => $from->username,
+            'text'                 => $text,
+            'file_paths'           => $original['file_paths'] ?? null,
+            'forwarded_from_id'    => $originalSenderId,
+            'forwarded_first_name' => $originalSenderFirstName,
+            'forwarded_last_name'  => $originalSenderLastName,
+            'forwarded_time'       => date('H:i', strtotime($originalTime)),
+            'time'                 => date('H:i'),
+            'avatar_path'          => $from->avatar_path,
+            'is_read'              => 0,
+            'is_group'             => $isGroup,
+        ]);
 
-        if (isset($this->users[$targetId])) {
-            $this->users[$targetId]->send($payload);
+        if ($isGroup) {
+            $stmtMembers = $this->pdo->prepare("SELECT user_id FROM room_members WHERE room_id = ?");
+            $stmtMembers->execute([$roomId]);
+            $members = $stmtMembers->fetchAll(PDO::FETCH_COLUMN);
+
+            foreach ($members as $memberId) {
+                if (isset($this->users[$memberId])) {
+                    $this->users[$memberId]->send($payload);
+                }
+            }
+        } else {
+            if ($toUserId && isset($this->users[$toUserId])) {
+                $this->users[$toUserId]->send($payload);
+            }
+            $from->send($payload);
         }
-        $from->send($payload);
+        // =========================================================================
 
     } catch (Exception $e) {
         echo "ИСКЛЮЧЕНИЕ: " . $e->getMessage() . "\n";
     }
     return;
 }
+
 // === УДАЛЕНИЕ СООБЩЕНИЯ ===
 if (($data['type'] ?? '') === 'delete_message') {
     $messageId = (int)($data['message_id'] ?? 0);
@@ -395,22 +426,37 @@ if (($data['type'] ?? '') === 'message' && isset($data['room_id'])) {
 
     if ($text === '' || !$from->user_id || !$room_id) return;
 
-    // 1. Проверяем доступ (есть ли пользователь в room_members)
-    $stmt = $this->pdo->prepare("SELECT 1 FROM room_members WHERE room_id = ? AND user_id = ?");
-    $stmt->execute([$room_id, $from->user_id]);
-    if (!$stmt->fetch()) {
-        $from->send(json_encode(['type' => 'error', 'text' => 'Нет доступа к комнате']));
+    // 1. Получаем данные комнаты из таблицы rooms
+    $stmt = $this->pdo->prepare("SELECT user1_id, user2_id, is_group FROM rooms WHERE id = ?");
+    $stmt->execute([$room_id]);
+    $room = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$room) {
+        $from->send(json_encode(['type' => 'error', 'text' => 'Комната не найдена']));
         return;
     }
 
-    // 2. Проверяем, группа это или личный чат
-    $stmt = $this->pdo->prepare("SELECT is_group FROM rooms WHERE id = ?");
-    $stmt->execute([$room_id]);
-    $isGroup = (bool)$stmt->fetchColumn();
+    $isGroup = ((int)$room['is_group'] === 1);
 
-    // 3. Сохраняем сообщение в БД
-    $stmt = $this->pdo->prepare("INSERT INTO messages (user_id, room_id, text) VALUES (?, ?, ?)");
-    $stmt->execute([$from->user_id, $room_id, $text]);
+    // 2. Проверяем доступ (для группы — в room_members, для лички — в user1_id / user2_id)
+    if ($isGroup) {
+        $stmt = $this->pdo->prepare("SELECT 1 FROM room_members WHERE room_id = ? AND user_id = ?");
+        $stmt->execute([$room_id, $from->user_id]);
+        if (!$stmt->fetch()) {
+            $from->send(json_encode(['type' => 'error', 'text' => 'Нет доступа к группе']));
+            return;
+        }
+    } else {
+        if ((int)$from->user_id !== (int)$room['user1_id'] && (int)$from->user_id !== (int)$room['user2_id']) {
+            $from->send(json_encode(['type' => 'error', 'text' => 'Нет доступа к чату']));
+            return;
+        }
+    }
+
+    // 3. Сохраняем сообщение в БД (записываем to_user_id для личных чатов)
+    $to_id = $isGroup ? null : (((int)$room['user1_id'] === (int)$from->user_id) ? (int)$room['user2_id'] : (int)$room['user1_id']);
+    $stmt = $this->pdo->prepare("INSERT INTO messages (user_id, to_user_id, room_id, text) VALUES (?, ?, ?, ?)");
+    $stmt->execute([$from->user_id, $to_id, $room_id, $text]);
     $message_id = (int)$this->pdo->lastInsertId();
 
     $payload = json_encode([
@@ -423,26 +469,21 @@ if (($data['type'] ?? '') === 'message' && isset($data['room_id'])) {
         'time'        => date('H:i'),
         'avatar_path' => $from->avatar_path,
         'is_read'     => 0,
-        'is_group' => (bool)$room['is_group']
+        'is_group'    => $isGroup,
     ]);
 
+    // 4. Рассылаем сообщение
     if ($isGroup) {
-        // Для группы — шлем всем участникам
         $stmt = $this->pdo->prepare("SELECT user_id FROM room_members WHERE room_id = ?");
         $stmt->execute([$room_id]);
         $members = $stmt->fetchAll(PDO::FETCH_COLUMN);
-        
+
         foreach ($members as $memberId) {
             if (isset($this->users[$memberId])) {
                 $this->users[$memberId]->send($payload);
             }
         }
     } else {
-        // Для личного чата — шлем только собеседнику
-        $stmt = $this->pdo->prepare("SELECT user_id FROM room_members WHERE room_id = ? AND user_id != ?");
-        $stmt->execute([$room_id, $from->user_id]);
-        $to_id = (int)$stmt->fetchColumn();
-
         if ($to_id && isset($this->users[$to_id])) {
             $this->users[$to_id]->send($payload);
         }
@@ -461,7 +502,7 @@ if (($data['type'] ?? '') === 'message' && isset($data['room_id'])) {
             }
 
             $stmt = $this->pdo->prepare(
-                "SELECT user1_id, user2_id FROM rooms WHERE id = ?"
+                "SELECT user1_id, user2_id, is_group FROM rooms WHERE id = ?"
             );
             $stmt->execute([$room_id]);
             $room = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -471,15 +512,25 @@ if (($data['type'] ?? '') === 'message' && isset($data['room_id'])) {
                 return;
             }
 
-            $user1 = (int)$room['user1_id'];
-            $user2 = (int)$room['user2_id'];
+            $isGroup = ((int)$room['is_group'] === 1);
 
-            if ($from->user_id !== $user1 && $from->user_id !== $user2) {
-                $from->send(json_encode(['type' => 'error', 'text' => 'Нет доступа к комнате']));
-                return;
+            if ($isGroup) {
+                $stmtMember = $this->pdo->prepare("SELECT 1 FROM room_members WHERE room_id = ? AND user_id = ?");
+                $stmtMember->execute([$room_id, $from->user_id]);
+                if (!$stmtMember->fetch()) {
+                    $from->send(json_encode(['type' => 'error', 'text' => 'Нет доступа к группе']));
+                    return;
+                }
+                $to_id = null;
+            } else {
+                $user1 = (int)$room['user1_id'];
+                $user2 = (int)$room['user2_id'];
+                if ((int)$from->user_id !== $user1 && (int)$from->user_id !== $user2) {
+                    $from->send(json_encode(['type' => 'error', 'text' => 'Нет доступа к комнате']));
+                    return;
+                }
+                $to_id = ((int)$from->user_id === $user1) ? $user2 : $user1;
             }
-
-            $to_id = ($from->user_id === $user1) ? $user2 : $user1;
 
             $stmt = $this->pdo->prepare(
                 "INSERT INTO messages (user_id, to_user_id, room_id, text, image_paths) 
@@ -510,17 +561,30 @@ if (($data['type'] ?? '') === 'message' && isset($data['room_id'])) {
                 'time'        => date('H:i'),
                 'avatar_path' => $from->avatar_path,
                 'is_read'     => 0,
+                'is_group'    => $isGroup,
             ]);
 
-            if (isset($this->users[$to_id])) {
-                $this->users[$to_id]->send($payload);
+            if ($isGroup) {
+                $stmtMembers = $this->pdo->prepare("SELECT user_id FROM room_members WHERE room_id = ?");
+                $stmtMembers->execute([$room_id]);
+                $members = $stmtMembers->fetchAll(PDO::FETCH_COLUMN);
+
+                foreach ($members as $memberId) {
+                    if (isset($this->users[$memberId])) {
+                        $this->users[$memberId]->send($payload);
+                    }
+                }
+            } else {
+                if ($to_id && isset($this->users[$to_id])) {
+                    $this->users[$to_id]->send($payload);
+                }
+                $from->send($payload);
             }
-            $from->send($payload);
             return;
         }
 
         // === МАССИВ КАРТИНОК + ТЕКСТ ===
-        if (($data['type'] ?? '') === 'image_batch_with_text' && isset($data['room_id'])) {
+                if (($data['type'] ?? '') === 'image_batch_with_text' && isset($data['room_id'])) {
             $room_id    = (int)$data['room_id'];
             $imagePaths = $data['image_paths'] ?? [];
             $text       = trim($data['text'] ?? '');
@@ -530,7 +594,7 @@ if (($data['type'] ?? '') === 'message' && isset($data['room_id'])) {
             }
 
             $stmt = $this->pdo->prepare(
-                "SELECT user1_id, user2_id FROM rooms WHERE id = ?"
+                "SELECT user1_id, user2_id, is_group FROM rooms WHERE id = ?"
             );
             $stmt->execute([$room_id]);
             $room = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -540,15 +604,25 @@ if (($data['type'] ?? '') === 'message' && isset($data['room_id'])) {
                 return;
             }
 
-            $user1 = (int)$room['user1_id'];
-            $user2 = (int)$room['user2_id'];
+            $isGroup = ((int)$room['is_group'] === 1);
 
-            if ($from->user_id !== $user1 && $from->user_id !== $user2) {
-                $from->send(json_encode(['type' => 'error', 'text' => 'Нет доступа к комнате']));
-                return;
+            if ($isGroup) {
+                $stmtMember = $this->pdo->prepare("SELECT 1 FROM room_members WHERE room_id = ? AND user_id = ?");
+                $stmtMember->execute([$room_id, $from->user_id]);
+                if (!$stmtMember->fetch()) {
+                    $from->send(json_encode(['type' => 'error', 'text' => 'Нет доступа к группе']));
+                    return;
+                }
+                $to_id = null;
+            } else {
+                $user1 = (int)$room['user1_id'];
+                $user2 = (int)$room['user2_id'];
+                if ((int)$from->user_id !== $user1 && (int)$from->user_id !== $user2) {
+                    $from->send(json_encode(['type' => 'error', 'text' => 'Нет доступа к комнате']));
+                    return;
+                }
+                $to_id = ((int)$from->user_id === $user1) ? $user2 : $user1;
             }
-
-            $to_id = ($from->user_id === $user1) ? $user2 : $user1;
 
             $stmt = $this->pdo->prepare(
                 "INSERT INTO messages (user_id, to_user_id, room_id, text, image_paths) 
@@ -581,17 +655,31 @@ if (($data['type'] ?? '') === 'message' && isset($data['room_id'])) {
                 'time'        => date('H:i'),
                 'avatar_path' => $from->avatar_path,
                 'is_read'     => 0,
+                'is_group'    => $isGroup,
             ]);
 
-            if (isset($this->users[$to_id])) {
-                $this->users[$to_id]->send($payload);
+            if ($isGroup) {
+                $stmtMembers = $this->pdo->prepare("SELECT user_id FROM room_members WHERE room_id = ?");
+                $stmtMembers->execute([$room_id]);
+                $members = $stmtMembers->fetchAll(PDO::FETCH_COLUMN);
+
+                foreach ($members as $memberId) {
+                    if (isset($this->users[$memberId])) {
+                        $this->users[$memberId]->send($payload);
+                    }
+                }
+            } else {
+                if ($to_id && isset($this->users[$to_id])) {
+                    $this->users[$to_id]->send($payload);
+                }
+                $from->send($payload);
             }
-            $from->send($payload);
             return;
         }
 
+
         // === ФАЙЛЫ + ТЕКСТ (новый блок) ===
-        if (($data['type'] ?? '') === 'file_batch_with_text' && isset($data['room_id'])) {
+                if (($data['type'] ?? '') === 'file_batch_with_text' && isset($data['room_id'])) {
             $room_id   = (int)$data['room_id'];
             $filePaths = $data['file_paths'] ?? [];
             $text      = trim($data['text'] ?? '');
@@ -600,8 +688,9 @@ if (($data['type'] ?? '') === 'message' && isset($data['room_id'])) {
                 return;
             }
 
+            // === 1. ИЗМЕНЕНО: ДОБАВИЛИ ПОЛЕ is_group В ЗАПРОС ===
             $stmt = $this->pdo->prepare(
-                "SELECT user1_id, user2_id FROM rooms WHERE id = ?"
+                "SELECT user1_id, user2_id, is_group FROM rooms WHERE id = ?"
             );
             $stmt->execute([$room_id]);
             $room = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -611,15 +700,27 @@ if (($data['type'] ?? '') === 'message' && isset($data['room_id'])) {
                 return;
             }
 
-            $user1 = (int)$room['user1_id'];
-            $user2 = (int)$room['user2_id'];
+            // === 2. ДОБАВЛЕНО: ПРОВЕРЯЕМ ДОСТУП ДЛЯ ГРУППЫ ИЛИ ЛИЧНОГО ЧАТА ===
+            $isGroup = ((int)$room['is_group'] === 1);
 
-            if ($from->user_id !== $user1 && $from->user_id !== $user2) {
-                $from->send(json_encode(['type' => 'error', 'text' => 'Нет доступа к комнате']));
-                return;
+            if ($isGroup) {
+                $stmtMember = $this->pdo->prepare("SELECT 1 FROM room_members WHERE room_id = ? AND user_id = ?");
+                $stmtMember->execute([$room_id, $from->user_id]);
+                if (!$stmtMember->fetch()) {
+                    $from->send(json_encode(['type' => 'error', 'text' => 'Нет доступа к группе']));
+                    return;
+                }
+                $to_id = null;
+            } else {
+                $user1 = (int)$room['user1_id'];
+                $user2 = (int)$room['user2_id'];
+                if ((int)$from->user_id !== $user1 && (int)$from->user_id !== $user2) {
+                    $from->send(json_encode(['type' => 'error', 'text' => 'Нет доступа к комнате']));
+                    return;
+                }
+                $to_id = ((int)$from->user_id === $user1) ? $user2 : $user1;
             }
-
-            $to_id = ($from->user_id === $user1) ? $user2 : $user1;
+            // =================================================================
 
             // Сохраняем в messages — пути в file_paths (JSON), текст отдельно
             $stmt = $this->pdo->prepare(
@@ -653,25 +754,87 @@ if (($data['type'] ?? '') === 'message' && isset($data['room_id'])) {
                 'time'        => date('H:i'),
                 'avatar_path' => $from->avatar_path,
                 'is_read'     => 0,
-                'is_group' => (bool)$room['is_group'],
+                'is_group'    => $isGroup, // <--- 3. ИЗМЕНЕНО: ИСПОЛЬЗУЕМ $isGroup
             ]);
 
-            if (isset($this->users[$to_id])) {
-                $this->users[$to_id]->send($payload);
+            // === 4. ИЗМЕНЕНО: РАССЫЛКА ВСЕМ УЧАСТНИКАМ ГРУППЫ ИЛИ ОДНОМУ СОБЕСЕДНИКУ ===
+            if ($isGroup) {
+                $stmtMembers = $this->pdo->prepare("SELECT user_id FROM room_members WHERE room_id = ?");
+                $stmtMembers->execute([$room_id]);
+                $members = $stmtMembers->fetchAll(PDO::FETCH_COLUMN);
+
+                foreach ($members as $memberId) {
+                    if (isset($this->users[$memberId])) {
+                        $this->users[$memberId]->send($payload);
+                    }
+                }
+            } else {
+                if ($to_id && isset($this->users[$to_id])) {
+                    $this->users[$to_id]->send($payload);
+                }
+                $from->send($payload);
             }
-            $from->send($payload);
+            // ========================================================================
             return;
         }
 
-        // === ОБРАБОТКА "ПРОЧИТАНО" ===
-        if (($data['type'] ?? '') === 'mark_all_read') {
-            $room_id = (int)($data['room_id'] ?? 0);
-            $user_id = (int)$from->user_id;
 
-            if (!$room_id || !$user_id || !$from->user_id) {
+        // === ОБРАБОТКА "ПРОЧИТАНО" ===
+      if (($data['type'] ?? '') === 'mark_all_read') {
+            $room_id = (int)($data['room_id'] ?? 0);
+            $user_id = (int)($from->user_id ?? 0);
+
+            if (!$room_id || !$user_id) {
                 return;
             }
 
+            // Проверяем, группа это или личный чат
+            $roomStmt = $this->pdo->prepare("SELECT is_group FROM rooms WHERE id = ?");
+            $roomStmt->execute([$room_id]);
+            $room = $roomStmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$room) {
+                return;
+            }
+
+            if ((int)$room['is_group'] === 1) {
+                // ДЛЯ ГРУППЫ: записываем прочтения индивидуально в message_reads только для $user_id
+                $stmt = $this->pdo->prepare("
+                    SELECT m.id, m.user_id 
+                    FROM messages m
+                    LEFT JOIN message_reads mr ON m.id = mr.message_id AND mr.user_id = ?
+                    WHERE m.room_id = ? AND m.user_id != ? AND mr.message_id IS NULL
+                ");
+                $stmt->execute([$user_id, $room_id, $user_id]);
+                $unreadMessages = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+                if (empty($unreadMessages)) {
+                    return;
+                }
+
+                $insertRead = $this->pdo->prepare(
+                    "INSERT IGNORE INTO message_reads (message_id, user_id) VALUES (?, ?)"
+                );
+
+                foreach ($unreadMessages as $msg) {
+                    $message_id = (int)$msg['id'];
+                    $sender_id = (int)$msg['user_id'];
+                    $insertRead->execute([$message_id, $user_id]);
+
+                    if (isset($this->users[$sender_id])) {
+                        $this->users[$sender_id]->send(json_encode([
+                            'type'       => 'message_read',
+                            'message_id' => $message_id,
+                            'room_id'    => $room_id,
+                        ]));
+                    }
+                }
+
+                echo "Группа $room_id: пользователь $user_id прочитал " . count($unreadMessages) . " сообщений\n";
+                return;
+            }
+
+            // ДЛЯ ЛИЧНОГО ЧАТА: стандартная логика
             $stmt = $this->pdo->prepare(
                 "SELECT id, user_id FROM messages 
                  WHERE room_id = ? AND is_read = 0 AND user_id != ?"
@@ -701,13 +864,12 @@ if (($data['type'] ?? '') === 'message' && isset($data['room_id'])) {
                     ]));
                 }
             }
+      }
 
             echo "Помечено прочитанными: " . count($unreadMessages) . " сообщений в комнате $room_id\n";
             return;
         }
-
-        error_log("UNKNOWN TYPE: " . ($data['type'] ?? 'NULL'));
-    }
+    
 
     function onClose(ConnectionInterface $conn) {
         $userId = $conn->user_id;

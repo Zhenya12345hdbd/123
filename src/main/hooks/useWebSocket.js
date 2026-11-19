@@ -136,15 +136,16 @@ export function useWebSocket({
   }, [currentUser]);
 
   const send = (payload) => {
-    if (USE_MOCK) {
-      if (payload.type === 'message' && payload.text) {
+        if (USE_MOCK) {
+      if ((payload.type === 'message' && payload.text) || payload.type === 'file_batch_with_text') {
         onMessage({
           id: Date.now(),
-          type: 'message',
+          type: payload.type,
           from: currentUser.id,
           room_id: payload.room_id,
           username: `${currentUser.first_name} ${currentUser.last_name}`,
-          text: payload.text,
+          text: payload.text || '',
+          file_paths: payload.file_paths || null,
           time: new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }),
           is_read: 0,
           avatar_path: currentUser.avatar_path,
@@ -160,51 +161,45 @@ export function useWebSocket({
             request_id: Date.now()
           });
         }, 1000);
-        
       }
       if (payload.type === 'delete_message') {
-  setTimeout(() => {
-    onMessage({ type: 'message_deleted', message_id: payload.message_id });
-  }, 300);
-  return true;
-}
-       if (payload.type === 'forward_message') {
-  const original = payload.original_message;
-  
-  // Берем имя из оригинального сообщения (msg.username) или подставляем текущего пользователя
-  const originalSenderName = original.username || `${currentUser.first_name} ${currentUser.last_name}`;
-  
-  // Разделяем имя на части для forwarded_first_name и forwarded_last_name (если нужно)
-  const nameParts = originalSenderName.split(' ');
-  const firstName = nameParts[0] || '';
-  const lastName = nameParts.slice(1).join(' ') || '';
+        setTimeout(() => {
+          onMessage({ type: 'message_deleted', message_id: payload.message_id });
+        }, 300);
+        return true;
+      }
+      if (payload.type === 'forward_message') {
+        const original = payload.original_message;
+        const originalSenderName = original.username || `${currentUser.first_name} ${currentUser.last_name}`;
+        const nameParts = originalSenderName.split(' ');
+        const firstName = nameParts[0] || '';
+        const lastName = nameParts.slice(1).join(' ') || '';
 
-  setTimeout(() => {
-    onMessage({
-      id: Date.now(),
-      type: 'file_batch_with_text',
-      from: currentUser.id,
-      to: payload.target_user_id,
-      room_id: activeRoomIdRef.current || 1,
-      username: `${currentUser.first_name} ${currentUser.last_name}`,
-      text: original.text,
-      file_paths: original.file_paths,
-      
-      // ПЕРЕДАЕМ ИМЯ И ВРЕМЯ, чтобы фронт их увидел
-      forwarded_from_id: original.from,
-      forwarded_first_name: firstName,
-      forwarded_last_name: lastName,
-      forwarded_from_name: originalSenderName, // на случай, если фронт ищет это поле
-      
-      forwarded_time: original.time || '12:00',
-      time: new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }),
-      is_read: 0,
-      avatar_path: currentUser.avatar_path,
-    });
-  }, 300);
-}
+        setTimeout(() => {
+          onMessage({
+            id: Date.now(),
+            type: 'file_batch_with_text',
+            from: currentUser.id,
+            to: payload.is_group ? null : payload.target_user_id,
+            room_id: payload.is_group ? payload.target_room_id : (activeRoomIdRef.current || 1),
+            username: `${currentUser.first_name} ${currentUser.last_name}`,
+            text: original.text,
+            file_paths: original.file_paths,
+            forwarded_from_id: original.from,
+            forwarded_first_name: firstName,
+            forwarded_last_name: lastName,
+            forwarded_from_name: originalSenderName,
+            forwarded_time: original.time || '12:00',
+            time: new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }),
+            is_read: 0,
+            is_group: Boolean(payload.is_group),
+            avatar_path: currentUser.avatar_path,
+          });
+        }, 300);
+      }
       return true;
     }
+
          
 
     const socket = socketRef.current;

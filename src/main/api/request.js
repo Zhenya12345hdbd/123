@@ -9,7 +9,8 @@ import {
   MOCK_REGISTER,
   MOCK_CREATE_ROOM,
   MOCK_UPLOAD,
-  MOCK_FRIENDS
+  MOCK_FRIENDS,
+  MOCK_GROUPS
 } from './mock';
 
 const delay = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -97,8 +98,9 @@ if (url.includes('get_friend_requests.php')) {
   if (url.includes('login.php'))             return MOCK_LOGIN;
   if (url.includes('register.php'))          return MOCK_REGISTER;
   if (url.includes('logout.php'))            return { success: true };
-  if (url.includes('upload.php'))    
-            return MOCK_UPLOAD;
+  if (url.includes('upload.php'))             return MOCK_UPLOAD;
+  if (url.includes('get_rooms.php'))         return MOCK_GROUPS;
+
 
   throw new Error(`[mock] Нет обработчика для ${url}`);
 }

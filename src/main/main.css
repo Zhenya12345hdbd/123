@@ -1233,3 +1233,6 @@ letter-spacing: 0px;
     Если хочешь плавнее, замени на ease-out.
   */
 }
+.group_height{
+    height: 100px;
+}
