@@ -18,12 +18,7 @@ function ChatHeader({
   friends, 
   onSendRequest, 
   friendRequests, 
-  onHandleRequest,
-  onCreateGroup,
-  groups = [],
-  isLoadingGroups,
-  unreadCounts,
-  activeChatId // <-- Принимаем правильный пропс
+  onHandleRequest // <-- Принимаем правильный пропс
 }) {
   const [query, setQuery] = useState('');
   const [showRequests, setShowRequests] = useState(false);
@@ -61,39 +56,7 @@ function ChatHeader({
     <div className="search_line">
       <div className="search">
         <div className="tag_now">
-          <div className="groups_section">
-        <div className="friends_num">
-          <h1>Groups</h1>
-          <button onClick={onCreateGroup} className="add_group_btn">+</button>
-        </div>
-        <div className="list group_height">
-          {isLoadingGroups ? (
-            <p>Загрузка...</p>
-          ) : groups.length === 0 ? (
-            <p style={{ color: '#888', fontSize: 12 }}>Нет групп</p>
-          ) : (
-            groups.map((g) => {
-              const count = unreadCounts[`group_${g.id}`] || 0;
-              const isActive = String(g.id) === String(activeChatId);
-
-              return (
-                <div 
-                  key={g.id} 
-                  className={`user_page ${isActive ? 'user_page_active' : ''}`}
-                  onClick={() => onClientClick(g.id, g.name, true)}
-                >
-                  <div className="group_avatar">👥</div>
-                  <div className="user_info">
-                    <p className="name_full">{g.name}</p>
-                    <span style={{ fontSize: '11px', color: '#888' }}>{g.members_count} участников</span>
-                    <div className="entered_message">{count > 0 ? count : ''}</div>
-                  </div>
-                </div>
-              );
-            })
-          )}
-        </div>
-      </div>
+          <h1>#general</h1>
           <img src={star} className="small_img" alt="Star" />
         </div>
         <div className="num">

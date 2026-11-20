@@ -210,18 +210,17 @@ const handleDeleteMessage = (msgId) => {
 
     if (!ok) alert('Нет соединения с чатом');
   };
- const handleForwardToFriend = (targetId, isGroup = false) => {
+  const handleForwardToFriend = (friendId) => {
   if (!messageToForward) return;
 
-  send({
-    type: 'forward_message',
-    is_group: isGroup,
-    target_user_id: isGroup ? 0 : targetId,
-    target_room_id: isGroup ? targetId : 0,
-    original_message: messageToForward,
+  // Отправляем через WebSocket
+  send({ 
+    type: 'forward_message', 
+    target_user_id: friendId, 
+    original_message: messageToForward 
   });
 
-  setMessageToForward(null);
+  setMessageToForward(null); // Закрываем модалку
   alert('Сообщение переслано!');
 };
  const handleOpenForward = (msg) => {
@@ -259,7 +258,9 @@ const handleCreateGroup = async (name, memberIds) => {
         loadFriends={loadFriends}
         isLoadingFriends={isLoadingFriends}
         onRemoveFriend={handleRemoveFriend}
-        
+        onCreateGroup={() => setShowCreateGroup(true)}
+        groups={groups}
+        isLoadingGroups={isLoadingGroups}
       />
 
       <div className="main_big">
@@ -274,12 +275,7 @@ const handleCreateGroup = async (name, memberIds) => {
           friends={friends}
           onSendRequest={sendFriendRequest}
           friendRequests={friendRequests}
-          onHandleRequest={handleRequestAction}
-          onCreateGroup={() => setShowCreateGroup(true)}
-        groups={groups}
-        isLoadingGroups={isLoadingGroups}
-        unreadCounts={unreadCounts}
-        activeChatId={activeChatId}
+     onHandleRequest={handleRequestAction}
         />
 
         <MessageList
@@ -308,13 +304,12 @@ const handleCreateGroup = async (name, memberIds) => {
           />
         )}
             {messageToForward && (
-  <ForwardModal
-    friends={friends}
-    groups={groups}
-    onClose={() => setMessageToForward(null)}
-    onForward={handleForwardToFriend}
-  />
-)}
+      <ForwardModal
+        friends={friends}
+        onClose={() => setMessageToForward(null)}
+        onForward={handleForwardToFriend}
+      />
+    )}
 
         {!activeRoomId && (
           <div style={{ textAlign: 'center', color: '#888', padding: '20px' }}>

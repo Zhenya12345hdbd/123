@@ -45,10 +45,6 @@ export const MOCK_LOGIN = {
   avatar_path: null,
   token: 'mock-token-123',
 };
-export const MOCK_GROUPS = [
-  { id: 101, name: 'Рабочий чат', members_count: 4 },
-  { id: 102, name: 'Флудилка', members_count: 3 },
-];
 
 // Ответ на регистрацию (как из register.php)
 export const MOCK_REGISTER = {
