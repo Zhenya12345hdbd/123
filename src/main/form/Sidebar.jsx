@@ -4,7 +4,7 @@ import settings from '../image/settings.png';
 import userPlaceholder from '../image/photo_user.avif';
 import { deleteAccount } from '../api/users';
 import UserCard from './userCard';
-
+import GroupCard from './group_card';
 
 function Sidebar({
   onLogout,
@@ -12,6 +12,7 @@ function Sidebar({
   currentUser,
   onClientClick,
   activeChatId,
+  activeChatIsGroup, // опционально, если передаёте из родителя
   unreadCounts,
   friends = [],
   isLoadingFriends,
@@ -19,6 +20,7 @@ function Sidebar({
   onCreateGroup,
   groups = [],
   isLoadingGroups,
+  onLeaveGroup,
 }) {
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -32,33 +34,57 @@ function Sidebar({
       await deleteAccount();
       localStorage.removeItem('chat_user');
       localStorage.removeItem('chat_token');
-      if (onLogout) onLogout(); 
+      if (onLogout) onLogout();
     } catch (err) {
       console.error(err);
       alert('Не удалось удалить аккаунт. Попробуйте позже.');
     }
   };
 
-  const filteredFriends = friends.filter((user) => {
-    const fullName = `${user.first_name} ${user.last_name}`.toLowerCase();
-    return fullName.includes(searchTerm.toLowerCase());
-  });
-
-  const sortedFriends = [...filteredFriends].sort((a, b) => {
-    const aOnline = onlineUsers.some((id) => String(id) === String(a.id));
-    const bOnline = onlineUsers.some((id) => String(id) === String(b.id));
-    if (aOnline !== bOnline) return aOnline ? -1 : 1;
-    const aName = `${a.first_name} ${a.last_name}`.toLowerCase();
-    const bName = `${b.first_name} ${b.last_name}`.toLowerCase();
-    return aName.localeCompare(bName, 'ru');
-  });
-
   const handleLogout = async () => {
-    try { await fetch('/logout.php', { method: 'POST' }); } catch (e) { console.error(e); }
+    try {
+      await fetch('/logout.php', { method: 'POST' });
+    } catch (e) {
+      console.error(e);
+    }
     localStorage.removeItem('chat_user');
     localStorage.removeItem('chat_token');
     onLogout?.();
   };
+
+  // 1. Объединяем группы и друзей в один массив
+  const combinedList = [
+    ...groups.map((g) => ({
+      ...g,
+      isGroup: true,
+      displayName: g.name,
+      uniqueKey: `group_${g.id}`,
+    })),
+    ...friends.map((u) => ({
+      ...u,
+      isGroup: false,
+      displayName: `${u.first_name} ${u.last_name}`,
+      uniqueKey: `user_${u.id}`,
+    })),
+  ];
+
+  // 2. Поиск по общему списку
+  const filteredList = combinedList.filter((item) =>
+    item.displayName.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // 3. Сортировка: группы -> онлайн-друзья -> остальные по алфавиту
+  const sortedList = [...filteredList].sort((a, b) => {
+    if (a.isGroup !== b.isGroup) return a.isGroup ? -1 : 1;
+
+    if (!a.isGroup && !b.isGroup) {
+      const aOnline = onlineUsers.some((id) => String(id) === String(a.id));
+      const bOnline = onlineUsers.some((id) => String(id) === String(b.id));
+      if (aOnline !== bOnline) return aOnline ? -1 : 1;
+    }
+
+    return a.displayName.localeCompare(b.displayName, 'ru');
+  });
 
   return (
     <div className="main_small">
@@ -68,7 +94,11 @@ function Sidebar({
       </div>
 
       <div className="user_card">
-        <img src={currentUser.avatar_path || userPlaceholder} className="main_user_card" alt="Current User" />
+        <img
+          src={currentUser.avatar_path || userPlaceholder}
+          className="main_user_card"
+          alt="Current User"
+        />
         <div className="user_name">
           <p className="name_full">{currentUser.first_name} {currentUser.last_name}</p>
           <button onClick={handleLogout} className="button_exit">Выйти</button>
@@ -76,73 +106,58 @@ function Sidebar({
         </div>
       </div>
 
-      <div className="groups_section">
-        <div className="friends_num">
-          <h1>Groups</h1>
-          <button onClick={onCreateGroup} className="add_group_btn">+</button>
-        </div>
-        <div className="list">
-          {isLoadingGroups ? (
-            <p>Загрузка...</p>
-          ) : groups.length === 0 ? (
-            <p style={{ color: '#888', fontSize: 12 }}>Нет групп</p>
-          ) : (
-            groups.map((g) => {
-              const count = unreadCounts[`group_${g.id}`] || 0;
-              const isActive = String(g.id) === String(activeChatId);
-
-              return (
-                <div 
-                  key={g.id} 
-                  className={`user_page ${isActive ? 'user_page_active' : ''}`}
-                  onClick={() => onClientClick(g.id, g.name, true)}
-                >
-                  <div className="group_avatar">👥</div>
-                  <div className="user_info">
-                    <p className="name_full">{g.name}</p>
-                    <span style={{ fontSize: '11px', color: '#888' }}>{g.members_count} участников</span>
-                    <div className="entered_message">{count > 0 ? count : ''}</div>
-                  </div>
-                </div>
-              );
-            })
-          )}
-        </div>
-      </div>
-
       <div className="friends">
         <div className="friends_num">
-          <h1>Friends</h1>
-          <h1>{friends.length}</h1>
+          <h1>Chats ({combinedList.length})</h1>
+          <button onClick={onCreateGroup} className="add_group_btn">+</button>
         </div>
-           
+
         <div className="search_user_div">
           <input
             type="text"
             className="search_user_input"
-            placeholder="Поиск по друзьям..."
+            placeholder="Поиск по чатам..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
 
         <div className="list">
-          {isLoadingFriends ? (
+          {isLoadingGroups || isLoadingFriends ? (
             <p style={{ color: '#888', textAlign: 'center' }}>Загрузка...</p>
-          ) : sortedFriends.length === 0 ? (
+          ) : sortedList.length === 0 ? (
             <p style={{ color: '#888', textAlign: 'center', fontSize: 12 }}>
-              {searchTerm ? 'Не найдено' : 'Нет друзей'}
+              {searchTerm ? 'Не найдено' : 'Нет чатов'}
             </p>
           ) : (
-            sortedFriends.map((u) => {
-              const isUserOnline = onlineUsers.some((id) => String(id) === String(u.id));
-              const isActive = String(u.id) === String(activeChatId);
-              const count = unreadCounts[u.id] || 0;
+            sortedList.map((item) => {
+              // Проверяем совпадение ID и типа чата (если activeChatIsGroup передан)
+              const isSameId = String(item.id) === String(activeChatId);
+              const isActive = activeChatIsGroup !== undefined
+                ? isSameId && item.isGroup === activeChatIsGroup
+                : isSameId;
+
+              if (item.isGroup) {
+                const unreadCount = unreadCounts[`group_${item.id}`] || 0;
+                return (
+                  <GroupCard
+                    key={item.uniqueKey}
+                    group={item}
+                    isActive={isActive}
+                    unreadCount={unreadCount}
+                    onClientClick={onClientClick}
+                    onLeaveGroup={onLeaveGroup}
+                  />
+                );
+              }
+
+              const isUserOnline = onlineUsers.some((id) => String(id) === String(item.id));
+              const count = unreadCounts[item.id] || 0;
 
               return (
                 <UserCard
-                  key={u.id}
-                  u={u}
+                  key={item.uniqueKey}
+                  u={item}
                   isUserOnline={isUserOnline}
                   isActive={isActive}
                   count={count}

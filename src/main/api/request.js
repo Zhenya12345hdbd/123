@@ -56,6 +56,12 @@ if (url.includes('delete_account.php')) {
   console.log('[MOCK] Удаление аккаунта');
   return { success: true };
 }
+if (url.includes('/get_rooms.php')) {
+  return [
+    { id: 1, name: 'Общий чат', members_count: 12 },
+    { id: 2, name: 'Разработка', members_count: 4 },
+  ];
+}
   if (url.includes('get_friends.php')) return MOCK_FRIENDS;
 if (url.includes('get_friend_requests.php')) {
   // Возвращаем фейковую заявку, чтобы проверить, как выглядит точка
@@ -97,8 +103,7 @@ if (url.includes('get_friend_requests.php')) {
   if (url.includes('login.php'))             return MOCK_LOGIN;
   if (url.includes('register.php'))          return MOCK_REGISTER;
   if (url.includes('logout.php'))            return { success: true };
-  if (url.includes('upload.php'))    
-            return MOCK_UPLOAD;
+  if (url.includes('upload.php'))    return MOCK_UPLOAD;
 
   throw new Error(`[mock] Нет обработчика для ${url}`);
 }

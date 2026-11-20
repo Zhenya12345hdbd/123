@@ -1,25 +1,23 @@
 import { useLongPress } from '../hooks/useLongPress';
 
-function GroupCard({ 
-  group, 
-  isActive, 
-  unreadCount, 
-  onClientClick, 
-  onLeaveGroup // на будущее, если захотите выход из группы по долгому нажатию
-}) {
+function GroupCard({ group, isActive, unreadCount, onClientClick, onLeaveGroup }) {
+  // 1. Хук вызывается всегда на самом верхнем уровне
   const longPressProps = useLongPress(
     () => {
-      // Долгое нажатие
+      if (!group) return;
       if (window.confirm(`Выйти из группы "${group.name}"?`)) {
         onLeaveGroup?.(group.id);
       }
     },
     () => {
-      // Обычный клик (открытие чата группы)
+      if (!group) return;
       onClientClick(group.id, group.name, true);
     },
     { delay: 600 }
   );
+
+  // 2. Проверка только ПОСЛЕ всех хуков
+  if (!group) return null;
 
   return (
     <div
