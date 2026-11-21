@@ -1,4 +1,5 @@
 // src/api/request.js
+import photo_user from '../image/photo_user.avif'
 
 import { USE_MOCK } from "../../config";
 import {
@@ -58,10 +59,31 @@ if (url.includes('delete_account.php')) {
 }
 if (url.includes('/get_rooms.php')) {
   return [
-    { id: 1, name: 'Общий чат', members_count: 12 },
-    { id: 2, name: 'Разработка', members_count: 4 },
+    {
+      id: 1,
+      name: 'Команда разработки',
+      members_count: 5,
+      member_avatars: [
+        photo_user,
+        photo_user,
+        null, // проверит подстановку вашего userPlaceholder
+        photo_user,
+      ],
+    },
+    {
+      id: 2,
+      name: 'Дизайн и UI',
+      members_count: 3,
+      member_avatars: [
+        photo_user,
+        photo_user,
+        photo_user,
+      ],
+    },
+  
   ];
 }
+
   if (url.includes('get_friends.php')) return MOCK_FRIENDS;
 if (url.includes('get_friend_requests.php')) {
   // Возвращаем фейковую заявку, чтобы проверить, как выглядит точка
