@@ -68,6 +68,7 @@ export const MOCK_UPLOAD = {
   size: 12345,
   safe_name: 'mock-upload.png',
 };
+
 export const MOCK_FRIENDS = [
   { id: 2,  first_name: 'Пётр',    last_name: 'Петров', avatar_path: null },
   { id: 11, first_name: 'Маша',    last_name: 'Машина', avatar_path: null },

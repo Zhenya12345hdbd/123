@@ -51,40 +51,12 @@ function Sidebar({
     localStorage.removeItem('chat_token');
     onLogout?.();
   };
-
-  // 1. Объединяем группы и друзей в один массив
-  const combinedList = [
-    ...groups.map((g) => ({
-      ...g,
-      isGroup: true,
-      displayName: g.name,
-      uniqueKey: `group_${g.id}`,
-    })),
-    ...friends.map((u) => ({
-      ...u,
-      isGroup: false,
-      displayName: `${u.first_name} ${u.last_name}`,
-      uniqueKey: `user_${u.id}`,
-    })),
-  ];
-
-  // 2. Поиск по общему списку
-  const filteredList = combinedList.filter((item) =>
+ const filteredList = groups.filter((item) =>
     item.displayName.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // 3. Сортировка: группы -> онлайн-друзья -> остальные по алфавиту
-  const sortedList = [...filteredList].sort((a, b) => {
-    if (a.isGroup !== b.isGroup) return a.isGroup ? -1 : 1;
-
-    if (!a.isGroup && !b.isGroup) {
-      const aOnline = onlineUsers.some((id) => String(id) === String(a.id));
-      const bOnline = onlineUsers.some((id) => String(id) === String(b.id));
-      if (aOnline !== bOnline) return aOnline ? -1 : 1;
-    }
-
-    return a.displayName.localeCompare(b.displayName, 'ru');
-  });
+  // 1. Объединяем группы и друзей в один массив
+  
 
   return (
     <div className="main_small">
@@ -108,7 +80,7 @@ function Sidebar({
 
       <div className="friends">
         <div className="friends_num">
-          <h1>Chats ({combinedList.length})</h1>
+          <h1>Chats ({groups.length})</h1>
           <button onClick={onCreateGroup} className="add_group_btn">+</button>
         </div>
 
@@ -125,12 +97,12 @@ function Sidebar({
         <div className="list">
           {isLoadingGroups || isLoadingFriends ? (
             <p style={{ color: '#888', textAlign: 'center' }}>Загрузка...</p>
-          ) : sortedList.length === 0 ? (
+          ) : filteredList.length === 0 ? (
             <p style={{ color: '#888', textAlign: 'center', fontSize: 12 }}>
               {searchTerm ? 'Не найдено' : 'Нет чатов'}
             </p>
           ) : (
-            sortedList.map((item) => {
+            filteredList.map((item) => {
               // Проверяем совпадение ID и типа чата (если activeChatIsGroup передан)
               const isSameId = String(item.id) === String(activeChatId);
               const isActive = activeChatIsGroup !== undefined

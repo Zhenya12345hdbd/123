@@ -244,6 +244,36 @@ const handleCreateGroup = async (name, memberIds) => {
     console.error(err);
   }
 };
+const combinedList = [
+    ...groups.map((g) => ({
+      ...g,
+      isGroup: true,
+      displayName: g.name,
+      uniqueKey: `group_${g.id}`,
+    })),
+    ...friends.map((u) => ({
+      ...u,
+      isGroup: false,
+      displayName: `${u.first_name} ${u.last_name}`,
+      uniqueKey: `user_${u.id}`,
+    })),
+  ];
+
+  // 2. Поиск по общему списку
+ 
+  // 3. Сортировка: группы -> онлайн-друзья -> остальные по алфавиту
+  const sortedList = [...combinedList].sort((a, b) => {
+    if (a.isGroup !== b.isGroup) return a.isGroup ? -1 : 1;
+
+    if (!a.isGroup && !b.isGroup) {
+      const aOnline = onlineUsers.some((id) => String(id) === String(a.id));
+      const bOnline = onlineUsers.some((id) => String(id) === String(b.id));
+      if (aOnline !== bOnline) return aOnline ? -1 : 1;
+    }
+
+    return a.displayName.localeCompare(b.displayName, 'ru');
+  });
+
 
   return (
     <div className="main">
@@ -259,7 +289,7 @@ const handleCreateGroup = async (name, memberIds) => {
         isLoadingFriends={isLoadingFriends}
         onRemoveFriend={handleRemoveFriend}
         onCreateGroup={() => setShowCreateGroup(true)}
-        groups={groups}
+        groups={sortedList}
         isLoadingGroups={isLoadingGroups}
       />
 
@@ -305,7 +335,7 @@ const handleCreateGroup = async (name, memberIds) => {
         )}
             {messageToForward && (
       <ForwardModal
-        friends={friends}
+        friends={sortedList}
         onClose={() => setMessageToForward(null)}
         onForward={handleForwardToFriend}
       />

@@ -110,7 +110,6 @@ function MessageList({
           y={contextMenu.y}
           onClose={() => setContextMenu(null)}
           onForward={() => onForwardMessage(contextMenu.msg)}
-          
           onDelete={() => onDeleteMessage(contextMenu.msg.id)}
         />
       )}
