@@ -1,13 +1,22 @@
 import { useLongPress } from '../hooks/useLongPress';
 import userPlaceholder from '../image/photo_user.avif';
 
-function GroupCard({ group, isActive, unreadCount, onClientClick, onLeaveGroup }) {
+function GroupCard({ group, isActive, unreadCount, onClientClick,onDeleteGroup,
+  onLeaveGroup,currentUserId }) {
+    const isCreator = String(group?.creator_id) === String(currentUserId);
   // 1. Хук вызывается всегда на самом верхнем уровне
   const longPressProps = useLongPress(
     () => {
       if (!group) return;
-      if (window.confirm(`Выйти из группы "${group.name}"?`)) {
-        onLeaveGroup?.(group.id);
+
+      if (isCreator) {
+        if (window.confirm(`Вы создатель. Удалить группу "${group.name}" для всех участников?`)) {
+          onDeleteGroup?.(group.id);
+        }
+      } else {
+        if (window.confirm(`Выйти из группы "${group.name}"?`)) {
+          onLeaveGroup?.(group.id);
+        }
       }
     },
     () => {

@@ -7,11 +7,12 @@ require 'auth.php';
 $me = requireAuth();
 
 try {
-    // 1. Получаем группы (добавили COUNT(*) в запрос, чтобы точно считать участников)
+    // 1. Добавили r.user1_id AS creator_id в выборку
     $stmt = $pdo->prepare("
         SELECT 
             r.id, 
             r.group_name,
+            r.user1_id AS creator_id,
             (SELECT COUNT(*) FROM room_members WHERE room_id = r.id) AS total_members,
             (SELECT GROUP_CONCAT(u.first_name, ' ', u.last_name SEPARATOR ', ') 
              FROM room_members rm2 
@@ -25,8 +26,7 @@ try {
     $stmt->execute([$me, $me]);
     $groups = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // 2. Подготавливаем запрос на получение первых 4 аватарок участников группы
-    // Сначала выбираем тех, у кого загружена аватарка
+    // 2. Запрос первых 4 аватарок участников
     $stmtAvatars = $pdo->prepare("
         SELECT u.avatar_path 
         FROM room_members rm
@@ -36,7 +36,7 @@ try {
         LIMIT 4
     ");
 
-    // 3. Собираем итоговый массив с аватарками
+    // 3. Передаём creator_id в итоговый JSON
     $result = array_map(function($g) use ($stmtAvatars) {
         $stmtAvatars->execute([$g['id']]);
         $avatars = $stmtAvatars->fetchAll(PDO::FETCH_COLUMN);
@@ -44,8 +44,9 @@ try {
         return [
             'id' => (int)$g['id'],
             'name' => $g['group_name'],
+            'creator_id' => (int)$g['creator_id'],
             'members_count' => (int)$g['total_members'],
-            'members_names' => $g['members_names'], // оставили на случай, если используете в интерфейсе
+            'members_names' => $g['members_names'],
             'member_avatars' => $avatars,
         ];
     }, $groups);

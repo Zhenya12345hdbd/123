@@ -21,6 +21,7 @@ function Sidebar({
   groups = [],
   isLoadingGroups,
   onLeaveGroup,
+  onDeleteGroup
 }) {
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -118,7 +119,9 @@ function Sidebar({
                     isActive={isActive}
                     unreadCount={unreadCount}
                     onClientClick={onClientClick}
-                    onLeaveGroup={onLeaveGroup}
+                     onDeleteGroup={onDeleteGroup}
+                      onLeaveGroup={onLeaveGroup}
+                      currentUserId={currentUser.id}
                   />
                 );
               }

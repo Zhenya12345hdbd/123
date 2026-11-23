@@ -49,7 +49,7 @@ function ForwardModal({ friends = [], onClose, onForward }) {
                 >
                   {item.isGroup ? (
                     /* Коллаж из 4 аватарок, как в Sidebar */
-                    <div className='group_avatar'>
+                    <div className='group_avatar_forvard'>
                       {avatars.length > 0 ? (
                         avatars.map((avatarPath, index) => (
                           <img

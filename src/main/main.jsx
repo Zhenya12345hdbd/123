@@ -19,7 +19,7 @@ import { useFriends } from './hooks/useFriends';
 import { fetchFriendRequests } from './api/users';
 import { uploadImage } from './api/upload';
 import { useGroups } from './hooks/useGroups';
-
+import { deleteGroup, leaveGroup } from './api/rooms';
 
 function Main({ onLogout }) {
   const [onlineUsers, setOnlineUsers] = useState([]);
@@ -93,6 +93,7 @@ function Main({ onLogout }) {
     return; 
   }
 
+
       appendMessage(data);
     },
     onUnreadIncrement: incrementForUser,
@@ -135,6 +136,8 @@ const handleDeleteMessage = (msgId) => {
     send({ type: 'delete_message', message_id: msgId });
   }
 };
+
+
 
   const handleRequestAction = (requestId, action) => {
     send({ type: 'handle_request', request_id: requestId, action });
@@ -273,6 +276,32 @@ const combinedList = [
 
     return a.displayName.localeCompare(b.displayName, 'ru');
   });
+  const handleDeleteGroup = async (roomId) => {
+  try {
+    await deleteGroup(roomId);
+    // Убираем группу из списка на экране
+    loadGroups((prev) => prev.filter((g) => String(g.id) !== String(roomId)));
+    // Если эта группа была сейчас открыта — закрываем чат
+    if (String(activeChatId) === String(roomId)) {
+      setActiveChatId(null);
+    }
+  } catch (err) {
+    console.error(err);
+    alert(err.message);
+  }
+};
+const handleLeaveGroup = async (roomId) => {
+  try {
+    await leaveGroup(roomId);
+    loadGroups((prev) => prev.filter((g) => String(g.id) !== String(roomId)));
+    if (String(activeChatId) === String(roomId)) {
+      setActiveChatId(null);
+    }
+  } catch (err) {
+    console.error(err);
+    alert(err.message);
+  }
+};
 
 
   return (
@@ -291,6 +320,8 @@ const combinedList = [
         onCreateGroup={() => setShowCreateGroup(true)}
         groups={sortedList}
         isLoadingGroups={isLoadingGroups}
+        onDeleteGroup={handleDeleteGroup}
+        onLeaveGroup={handleLeaveGroup}
       />
 
       <div className="main_big">
