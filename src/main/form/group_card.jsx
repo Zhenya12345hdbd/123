@@ -3,6 +3,12 @@ import userPlaceholder from '../image/photo_user.avif';
 
 function GroupCard({ group, isActive, unreadCount, onClientClick,onDeleteGroup,
   onLeaveGroup,currentUserId }) {
+
+    console.log('ДАННЫЕ ГРУППЫ:', {
+    group,
+    creator_id: group?.creator_id,
+    currentUserId,
+  });
     const isCreator = String(group?.creator_id) === String(currentUserId);
   // 1. Хук вызывается всегда на самом верхнем уровне
   const longPressProps = useLongPress(

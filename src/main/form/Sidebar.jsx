@@ -121,7 +121,7 @@ function Sidebar({
                     onClientClick={onClientClick}
                      onDeleteGroup={onDeleteGroup}
                       onLeaveGroup={onLeaveGroup}
-                      currentUserId={currentUser.id}
+                      currentUserId={currentUser?.id}
                   />
                 );
               }

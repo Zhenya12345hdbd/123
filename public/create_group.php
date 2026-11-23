@@ -32,8 +32,8 @@ try {
     $pdo->beginTransaction();
 
     // 1. Создаем комнату
-    $stmt = $pdo->prepare("INSERT INTO rooms (user1_id, user2_id, is_group, group_name) VALUES (0, 0, 1, ?)");
-    $stmt->execute([$groupName]);
+    $stmt = $pdo->prepare("INSERT INTO rooms (user1_id, user2_id, is_group, group_name) VALUES (?, 0, 1, ?)");
+$stmt->execute([$me, $groupName]);
     $roomId = (int)$pdo->lastInsertId();
 
     // 2. Добавляем участников
