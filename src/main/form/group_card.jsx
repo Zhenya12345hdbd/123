@@ -2,7 +2,7 @@ import { useLongPress } from '../hooks/useLongPress';
 import userPlaceholder from '../image/photo_user.avif';
 
 function GroupCard({ group, isActive, unreadCount, onClientClick,onDeleteGroup,
-  onLeaveGroup,currentUserId }) {
+  onLeaveGroup,currentUserId, onlineUsers = []}) {
 
     console.log('ДАННЫЕ ГРУППЫ:', {
     group,
@@ -39,12 +39,18 @@ function GroupCard({ group, isActive, unreadCount, onClientClick,onDeleteGroup,
   const avatars = Array.isArray(group.member_avatars)
     ? group.member_avatars.slice(0, 4)
     : [];
+    const onlineSet = new Set(onlineUsers.map(String));
+
+const isAnyoneOnline = group?.member_ids?.some(
+  (id) => String(id) !== String(currentUserId) && onlineSet.has(String(id))
+);
 
   return (
     <div
       {...longPressProps}
       className={`user_page ${isActive ? 'user_page_active' : ''}`}
     >
+      <div className={`tochka ${isAnyoneOnline === true ? 'online' : 'offline'}`} />
       {/* Картинки рендерятся строго внутри иконки группы */}
       <div className={`group_avatar`}>
         {avatars.length > 0 ? (

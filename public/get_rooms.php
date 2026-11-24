@@ -37,19 +37,27 @@ try {
     ");
 
     // 3. Передаём creator_id в итоговый JSON
-    $result = array_map(function($g) use ($stmtAvatars) {
-        $stmtAvatars->execute([$g['id']]);
-        $avatars = $stmtAvatars->fetchAll(PDO::FETCH_COLUMN);
+    // В get_rooms.php после $stmtAvatars добавьте запрос на получение ID участников:
+$stmtMemberIds = $pdo->prepare("SELECT user_id FROM room_members WHERE room_id = ?");
 
-        return [
-            'id' => (int)$g['id'],
-            'name' => $g['group_name'],
-            'creator_id' => (int)$g['creator_id'],
-            'members_count' => (int)$g['total_members'],
-            'members_names' => $g['members_names'],
-            'member_avatars' => $avatars,
-        ];
-    }, $groups);
+// Внутри array_map:
+$result = array_map(function($g) use ($stmtAvatars, $stmtMemberIds) {
+    $stmtAvatars->execute([$g['id']]);
+    $avatars = $stmtAvatars->fetchAll(PDO::FETCH_COLUMN);
+
+    $stmtMemberIds->execute([$g['id']]);
+    $memberIds = array_map('intval', $stmtMemberIds->fetchAll(PDO::FETCH_COLUMN));
+
+    return [
+        'id' => (int)$g['id'],
+        'name' => $g['group_name'],
+        'creator_id' => (int)$g['creator_id'],
+        'members_count' => (int)$g['total_members'],
+        'members_names' => $g['members_names'],
+        'member_avatars' => $avatars,
+        'member_ids' => $memberIds, // <-- массив ID всех участников группы
+    ];
+}, $groups);
 
     echo json_encode($result, JSON_UNESCAPED_UNICODE);
 } catch (Exception $e) {

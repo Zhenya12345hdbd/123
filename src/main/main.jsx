@@ -19,7 +19,7 @@ import { useFriends } from './hooks/useFriends';
 import { fetchFriendRequests } from './api/users';
 import { uploadImage } from './api/upload';
 import { useGroups } from './hooks/useGroups';
-import { deleteGroup, leaveGroup } from './api/rooms';
+
 
 function Main({ onLogout }) {
   const [onlineUsers, setOnlineUsers] = useState([]);
@@ -91,8 +91,7 @@ function Main({ onLogout }) {
        if (data.type === 'message_deleted') {
         removeMessage(data.message_id);
     return; 
-  }
-
+    }
 
       appendMessage(data);
     },
@@ -109,7 +108,7 @@ function Main({ onLogout }) {
       setFriendRequests((prev) => [...prev, data]);
     },
     onRequestHandled: (data) => {
-  if (data.action === 'accept') {
+         if (data.action === 'accept') {
     loadFriends(); 
     alert('Ваша заявка в друзья принята!');
   } else {
@@ -120,7 +119,20 @@ function Main({ onLogout }) {
 onFriendListUpdated: () => {
   console.log('Сервер сообщил об обновлении списка друзей (для того, кто принял)');
   loadFriends(); // Перезапрашиваем друзей
-}
+},
+onGroupListUpdated: () => {
+      console.log('Запускаем loadGroups()');
+      loadGroups();
+    },
+    onGroupDeleted: (deletedRoomId) => {
+      loadGroups();
+      if (String(activeRoomIdRef.current) === String(deletedRoomId)) {
+        setActiveRoomId(null);
+        setActiveChatId(null);
+        setActiveChatName('');
+      }
+    },
+
     
   });
 
@@ -229,24 +241,20 @@ const handleDeleteMessage = (msgId) => {
  const handleOpenForward = (msg) => {
   setMessageToForward(msg);
 };
-const handleCreateGroup = async (name, memberIds) => {
-  try {
-    const res = await fetch('create_group.php', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, members: memberIds })
-    });
-    const data = await res.json();
-    if (data.success) {
-      setShowCreateGroup(false);
-      loadGroups();
-      alert('Группа создана!');
-      // Тут можно сразу открыть новую группу: handleClientClick(data.room_id, name)
-    }
-  } catch (err) {
-    console.error(err);
+const handleCreateGroup = (name, memberIds) => {
+  if (!isConnected) {
+    alert('Нет соединения с сервером');
+    return;
   }
-};
+
+  send({
+    type: 'create_group',
+    name,
+    members: memberIds,
+  });
+
+  setShowCreateGroup(false);
+}
 const combinedList = [
     ...groups.map((g) => ({
       ...g,
@@ -276,37 +284,25 @@ const combinedList = [
 
     return a.displayName.localeCompare(b.displayName, 'ru');
   });
-  const handleDeleteGroup = async (roomId) => {
-  try {
-    await deleteGroup(roomId);
-    // Убираем группу из списка на экране
-    loadGroups((prev) => prev.filter((g) => String(g.id) !== String(roomId)));
-    // Если эта группа была сейчас открыта — закрываем чат
-    if (String(activeChatId) === String(roomId)) {
-      setActiveChatId(null);
-    }
-  } catch (err) {
-    console.error(err);
-    alert(err.message);
-  }
+ const handleDeleteGroup = (roomId) => {
+  if (!isConnected) return;
+  send({
+    type: 'delete_group',
+    room_id: roomId,
+  });
 };
-const handleLeaveGroup = async (roomId) => {
-  try {
-    await leaveGroup(roomId);
-    loadGroups((prev) => prev.filter((g) => String(g.id) !== String(roomId)));
-    if (String(activeChatId) === String(roomId)) {
-      setActiveChatId(null);
-    }
-  } catch (err) {
-    console.error(err);
-    alert(err.message);
-  }
+const handleLeaveGroup = (roomId) => {
+  if (!isConnected) return;
+  send({
+    type: 'remove_group_member',
+    room_id: roomId,
+  });
 };
 
 
   return (
     <div className="main">
-      <Sidebar
+       <Sidebar
         onLogout={onLogout}
         onlineUsers={onlineUsers}
         currentUser={currentUser}
@@ -318,7 +314,7 @@ const handleLeaveGroup = async (roomId) => {
         isLoadingFriends={isLoadingFriends}
         onRemoveFriend={handleRemoveFriend}
         onCreateGroup={() => setShowCreateGroup(true)}
-        groups={sortedList}
+        groups={sortedList} // <-- ИСПРАВЛЕНО: передаём чистый массив groups, а не sortedList
         isLoadingGroups={isLoadingGroups}
         onDeleteGroup={handleDeleteGroup}
         onLeaveGroup={handleLeaveGroup}

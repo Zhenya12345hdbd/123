@@ -122,13 +122,17 @@ function Sidebar({
                      onDeleteGroup={onDeleteGroup}
                       onLeaveGroup={onLeaveGroup}
                       currentUserId={currentUser?.id}
+                       onlineUsers={onlineUsers}
                   />
                 );
               }
 
               const isUserOnline = onlineUsers.some((id) => String(id) === String(item.id));
               const count = unreadCounts[item.id] || 0;
-
+console.log('--- ПРОВЕРКА MAIN.JSX ---');
+console.log('Непрочитанные (unreadCounts):', unreadCounts);
+console.log('Группы (groups):', groups);
+console.log('Друзья (friends):', friends);
               return (
                 <UserCard
                   key={item.uniqueKey}

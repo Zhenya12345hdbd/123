@@ -18,38 +18,9 @@ export async function fetchHistory(roomId, { beforeId = null, limit = 10 } = {})
 
   return request(`${API.history}?${params.toString()}`);
 }
-export async function deleteGroup(roomId) {
-  const token = localStorage.getItem('chat_token');
-  const response = await fetch('/delete_group.php', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-    body: JSON.stringify({ room_id: roomId }),
-  });
 
-  const data = await response.json();
-  if (!response.ok) {
-    throw new Error(data.error || 'Не удалось удалить группу');
-  }
-  return data;
-}
 
-export async function leaveGroup(roomId) {
-  const token = localStorage.getItem('chat_token');
-  const response = await fetch('/remove_member.php', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-    body: JSON.stringify({ room_id: roomId }),
-  });
 
-  const data = await response.json();
-  if (!response.ok) {
-    throw new Error(data.error || 'Не удалось выйти из группы');
-  }
-  return data;
-}
+
+  
+

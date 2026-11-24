@@ -9,10 +9,24 @@ export function useWebSocket({
   onStatus,
   onNewRequest,
   onRequestHandled,
-  onFriendListUpdated, // <-- ДОБАВЛЕНО В ПРОПСЫ
+  onFriendListUpdated,
+   onGroupListUpdated, // <-- 1. ДОБАВИЛИ В ПРОПСЫ
+  onGroupDeleted, // <-- ДОБАВЛЕНО В ПРОПСЫ
 }) {
   const [isConnected, setIsConnected] = useState(false);
   const socketRef = useRef(null);
+  const handlersRef = useRef({
+  onFriendListUpdated,
+  onGroupListUpdated,
+  onGroupDeleted,
+});
+useEffect(() => {
+  handlersRef.current = {
+    onFriendListUpdated,
+    onGroupListUpdated,
+    onGroupDeleted,
+  };
+});
 
   useEffect(() => {
     if (!currentUser) return;
@@ -118,6 +132,16 @@ export function useWebSocket({
           onFriendListUpdated?.();
           break;
 
+        case 'group_list_updated':
+          console.log('СЕРВЕР ОБНОВИЛ СПИСОК ГРУПП');
+          handlersRef.current.onGroupListUpdated?.(data);
+          break;
+
+        case 'group_deleted':
+          console.log('ГРУППА УДАЛЕНА ИЛИ ВЫ ИСКЛЮЧЕНЫ:', data.room_id);
+          handlersRef.current.onGroupDeleted?.(data.room_id);
+          break;
+
         case 'user_status':
           onStatus?.({ userId: data.user_id, isOnline: data.is_online });
           break;
@@ -161,6 +185,15 @@ export function useWebSocket({
           });
         }, 1000);
         
+        
+      }
+      if (payload.type === 'create_group') {
+        setTimeout(() => onGroupListUpdated?.(), 200);
+        return true;
+      }
+      if (payload.type === 'delete_group' || payload.type === 'remove_group_member') {
+        setTimeout(() => onGroupDeleted?.(payload.room_id), 200);
+        return true;
       }
       if (payload.type === 'delete_message') {
   setTimeout(() => {
