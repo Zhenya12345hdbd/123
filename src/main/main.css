@@ -1179,11 +1179,81 @@ letter-spacing: 0px;
 
 .forward-item {
   display: flex;
+  align-items: center;
   gap: 10px;
   padding: 10px;
   border-radius: 8px;
   cursor: pointer;
   transition: background 0.2s;
+  justify-content: space-between;
+
+}
+.forward-item-img-name{
+    display: flex;
+    height: 100%;
+    align-items: center;
+    gap:10px;
+}
+
+.forward-item-img-name span{
+    color: #919191;
+font-weight: 700;
+font-size: 14px;
+line-height: 100%;
+letter-spacing: 0px;
+}
+
+.forward-item input[type="checkbox"].checkbox {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  min-width: 20px; /* чтобы flex-контейнер не сжимал чекбокс */
+  background-color: #2b2b2b;
+  border: 2px solid #ff4444;
+  border-radius: 4px;
+  cursor: pointer;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+}
+
+.forward-item input[type="checkbox"].checkbox:checked {
+  background-color: #ff4444;
+ 
+   border: 1px solid red; /* Зеленоватая рамка при фокусе */
+  box-shadow: 0 0px 15px #d9534f;
+}
+
+.forward-item input[type="checkbox"].checkbox:checked::after {
+  content: "";
+  width: 5px;
+  height: 10px;
+  border: solid #ffffff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+  margin-bottom: 2px;
+}
+.buttons_group_create{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    margin-top: 15px;
+}
+
+.button_create_group{
+    padding: 5px 10px;
+    border-radius: 5px;
+    background-color: grey;
+}
+
+.forward-item img{
+    width: 30px;
+    height: 30px;
+    object-fit: cover;
 }
 
 .forward-item:hover {
