@@ -39,12 +39,13 @@ function CreateGroupModal({ friends, onClose, onCreate }) {
               onClick={() => toggleUser(f.id)}
             >
               <div className='forward-item-img-name'>
-                <img src={f.avatar_path || userPlaceholder} alt="avatar" />
+                <img className='forward-item-img-create' src={f.avatar_path || userPlaceholder} alt="avatar" />
                 <span >{f.first_name} {f.last_name}</span>
               </div>
               <input className='checkbox' type="checkbox" checked={selected.includes(f.id)} readOnly />
             </div>
           ))}
+          
         </div>
         <div className='buttons_group_create'>
           <button onClick={onClose} className='button_exit'>Отмена</button>

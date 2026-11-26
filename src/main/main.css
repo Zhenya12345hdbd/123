@@ -1188,6 +1188,16 @@ letter-spacing: 0px;
   justify-content: space-between;
 
 }
+.forward-item-space{
+     display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+ 
+}
 .forward-item-img-name{
     display: flex;
     height: 100%;
@@ -1250,7 +1260,7 @@ letter-spacing: 0px;
     background-color: grey;
 }
 
-.forward-item img{
+.forward-item-img-create{
     width: 30px;
     height: 30px;
     object-fit: cover;

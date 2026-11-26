@@ -21,7 +21,8 @@ function Sidebar({
   groups = [],
   isLoadingGroups,
   onLeaveGroup,
-  onDeleteGroup
+  onDeleteGroup,
+  onOpenGroupInfo
 }) {
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -84,6 +85,7 @@ function Sidebar({
           <h1>Chats ({groups.length})</h1>
           <button onClick={onCreateGroup} className="add_group_btn">+</button>
         </div>
+        
 
         <div className="search_user_div">
           <input
@@ -123,16 +125,13 @@ function Sidebar({
                       onLeaveGroup={onLeaveGroup}
                       currentUserId={currentUser?.id}
                        onlineUsers={onlineUsers}
+                       onOpenGroupInfo={onOpenGroupInfo}
                   />
                 );
               }
 
               const isUserOnline = onlineUsers.some((id) => String(id) === String(item.id));
               const count = unreadCounts[item.id] || 0;
-console.log('--- ПРОВЕРКА MAIN.JSX ---');
-console.log('Непрочитанные (unreadCounts):', unreadCounts);
-console.log('Группы (groups):', groups);
-console.log('Друзья (friends):', friends);
               return (
                 <UserCard
                   key={item.uniqueKey}

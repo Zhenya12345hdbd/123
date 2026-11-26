@@ -7,6 +7,7 @@ import Sidebar from './form/Sidebar';
 import MessageInput from './form/MessageInput';
 import MessageList from './form/MessageList';
 import ChatHeader from './form/ChatHeader';
+import GroupInfoModal from './form/GroupInfoModal';
 
 import { useUsers } from './hooks/useUsers';
 import { sizeImage } from './hooks/size_image';
@@ -21,10 +22,11 @@ import { uploadImage } from './api/upload';
 import { useGroups } from './hooks/useGroups';
 
 
+
 function Main({ onLogout }) {
   const [onlineUsers, setOnlineUsers] = useState([]);
   const [friendRequests, setFriendRequests] = useState([]); // <-- Заявки в друзья
-
+const [selectedGroupInfo, setSelectedGroupInfo] = useState(null);
   const [activeRoomId, setActiveRoomId] = useState(null);
   const [activeChatId, setActiveChatId] = useState(null);
   const [activeChatName, setActiveChatName] = useState('');
@@ -225,17 +227,17 @@ const handleDeleteMessage = (msgId) => {
 
     if (!ok) alert('Нет соединения с чатом');
   };
-  const handleForwardToFriend = (friendId) => {
+const handleForwardToFriend = (friendId, isGroup = false) => {
   if (!messageToForward) return;
 
-  // Отправляем через WebSocket
-  send({ 
-    type: 'forward_message', 
-    target_user_id: friendId, 
-    original_message: messageToForward 
+  send({
+    type: 'forward_message',
+    target_user_id: friendId,
+    is_group: isGroup,
+    original_message: messageToForward,
   });
 
-  setMessageToForward(null); // Закрываем модалку
+  setMessageToForward(null);
   alert('Сообщение переслано!');
 };
  const handleOpenForward = (msg) => {
@@ -298,6 +300,14 @@ const handleLeaveGroup = (roomId) => {
     room_id: roomId,
   });
 };
+const handleKickMember = (roomId, targetUserId) => {
+  if (!isConnected) return;
+  send({
+    type: 'remove_group_member',
+    room_id: roomId,
+    user_id: targetUserId,
+  });
+};
 
 
   return (
@@ -318,6 +328,7 @@ const handleLeaveGroup = (roomId) => {
         isLoadingGroups={isLoadingGroups}
         onDeleteGroup={handleDeleteGroup}
         onLeaveGroup={handleLeaveGroup}
+        onOpenGroupInfo={(group) => setSelectedGroupInfo(group)}
       />
 
       <div className="main_big">
@@ -381,6 +392,17 @@ const handleLeaveGroup = (roomId) => {
           onCreate={handleCreateGroup} 
         />
       )}
+      {selectedGroupInfo && (
+        <GroupInfoModal
+          group={selectedGroupInfo}
+          currentUserId={currentUser?.id}
+          onlineUsers={onlineUsers}
+          onClose={() => setSelectedGroupInfo(null)}
+          onKickMember={handleKickMember}
+          onDeleteGroup={handleDeleteGroup}
+          onLeaveGroup={handleLeaveGroup}
+        />
+          )}
       </div>
     </div>
   );

@@ -110,40 +110,59 @@ if (($data['type'] ?? '') === 'send_request') {
 }
 if (($data['type'] ?? '') === 'forward_message') {
     $targetId = (int)($data['target_user_id'] ?? 0);
+    $isGroup  = (bool)($data['is_group'] ?? false);
     $original = $data['original_message'] ?? null;
+    $me       = (int)$from->user_id;
 
-    if (!$targetId || !$original || !$from->user_id) return;
+    if (!$targetId || !$original || !$me) return;
 
     try {
-        // 1. Комната
-        $min = min($from->user_id, $targetId);
-        $max = max($from->user_id, $targetId);
-        $stmt = $this->pdo->prepare("SELECT id FROM rooms WHERE user1_id = ? AND user2_id = ?");
-        $stmt->execute([$min, $max]);
-        $room = $stmt->fetch(PDO::FETCH_ASSOC);
+        $roomId   = 0;
+        $toUserId = 0;
 
-        if (!$room) {
-            $stmt = $this->pdo->prepare("INSERT INTO rooms (user1_id, user2_id) VALUES (?, ?)");
-            $stmt->execute([$min, $max]);
-            $roomId = (int)$this->pdo->lastInsertId();
+        // 1. Определяем комнату (группа или личный чат)
+        if ($isGroup) {
+            $roomId = $targetId;
+
+            // Проверяем, что отправитель состоит в группе
+            $stmtCheck = $this->pdo->prepare("SELECT 1 FROM room_members WHERE room_id = ? AND user_id = ?");
+            $stmtCheck->execute([$roomId, $me]);
+            if (!$stmtCheck->fetch()) {
+                echo "ОШИБКА: Пользователь $me не состоит в группе $roomId\n";
+                return;
+            }
         } else {
-            $roomId = (int)$room['id'];
+            $toUserId = $targetId;
+            $min = min($me, $targetId);
+            $max = max($me, $targetId);
+
+            $stmt = $this->pdo->prepare("SELECT id FROM rooms WHERE user1_id = ? AND user2_id = ? AND is_group = 0");
+            $stmt->execute([$min, $max]);
+            $room = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$room) {
+                $stmt = $this->pdo->prepare("INSERT INTO rooms (user1_id, user2_id, is_group) VALUES (?, ?, 0)");
+                $stmt->execute([$min, $max]);
+                $roomId = (int)$this->pdo->lastInsertId();
+            } else {
+                $roomId = (int)$room['id'];
+            }
         }
 
-        // 2. Готовим данные (ВОТ ЭТОТ БЛОК ДОЛЖЕН БЫТЬ ДО INSERT!)
+        // 2. Готовим данные оригинального сообщения
         $text = $original['text'] ?? null;
-        $filePaths = $original['file_paths'] ? json_encode($original['file_paths']) : null;
-        $originalSenderId = $original['from'] ?? $from->user_id;
+        $rawFiles = $original['file_paths'] ?? $original['image_paths'] ?? null;
+        $filePaths = !empty($rawFiles) ? json_encode($rawFiles) : null;
+        $originalSenderId = (int)($original['from'] ?? $me);
 
-        // Получаем имя и фамилию
+        // Получаем имя и фамилию автора оригинала
         $stmt = $this->pdo->prepare("SELECT first_name, last_name FROM users WHERE id = ?");
         $stmt->execute([$originalSenderId]);
         $originalUser = $stmt->fetch(PDO::FETCH_ASSOC);
         $originalSenderFirstName = $originalUser ? $originalUser['first_name'] : 'Пользователь';
-        $originalSenderLastName = $originalUser ? $originalUser['last_name'] : '';
-        $originalSenderName = $originalSenderFirstName . ' ' . $originalSenderLastName; // <-- ДОБАВИТЬ ЭТУ СТРОКУ
+        $originalSenderLastName  = $originalUser ? $originalUser['last_name'] : '';
 
-        // Время
+        // Время оригинала
         $originalTimeStr = $original['time'] ?? null;
         if ($originalTimeStr && strlen($originalTimeStr) <= 5) {
             $originalTime = date('Y-m-d') . ' ' . $originalTimeStr . ':00';
@@ -157,12 +176,12 @@ if (($data['type'] ?? '') === 'forward_message') {
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         ");
         $result = $stmt->execute([
-            $from->user_id, 
-            $targetId, 
-            $roomId, 
-            $text, 
-            $filePaths, 
-            $originalSenderId, 
+            $me,
+            $toUserId,
+            $roomId,
+            $text,
+            $filePaths,
+            $originalSenderId,
             $originalTime,
             $originalSenderFirstName,
             $originalSenderLastName
@@ -174,37 +193,50 @@ if (($data['type'] ?? '') === 'forward_message') {
         }
 
         $messageId = (int)$this->pdo->lastInsertId();
-        echo "УСПЕХ! Сообщение добавлено в БД, ID: $messageId\n";
+        echo "УСПЕХ! Сообщение переслано в комнату $roomId (isGroup: " . ($isGroup ? '1' : '0') . "), ID: $messageId\n";
 
-        // 4. Отправляем
-       $payload = json_encode([
-    'type'              => 'file_batch_with_text',
-    'id'                => $messageId,
-    'from'              => $from->user_id,
-    'to'                => $targetId,
-    'room_id'           => $roomId,
-    'username'          => $from->username,
-    'text'              => $text,
-    'file_paths'        => $original['file_paths'] ?? null,
-    'forwarded_from_id' => $originalSenderId,
-    'forwarded_first_name' => $originalSenderFirstName, // <-- ДОБАВИТЬ
-    'forwarded_last_name'  => $originalSenderLastName,  // <-- ДОБАВИТЬ
-    'forwarded_time'    => date('H:i', strtotime($originalTime)),
-    'time'              => date('H:i'),
-    'avatar_path'       => $from->avatar_path,
-    'is_read'           => 0,
-]);
+        // 4. Формируем пакет для отправки клиентам
+        $payload = json_encode([
+            'type'                 => 'file_batch_with_text',
+            'id'                   => $messageId,
+            'from'                 => $me,
+            'to'                   => $toUserId,
+            'room_id'              => $roomId,
+            'username'             => $from->username,
+            'text'                 => $text,
+            'file_paths'           => $rawFiles,
+            'forwarded_from_id'    => $originalSenderId,
+            'forwarded_first_name' => $originalSenderFirstName,
+            'forwarded_last_name'  => $originalSenderLastName,
+            'forwarded_time'       => date('H:i', strtotime($originalTime)),
+            'time'                 => date('H:i'),
+            'avatar_path'          => $from->avatar_path,
+            'is_read'              => 0,
+            'is_group'             => $isGroup,
+        ]);
 
-        if (isset($this->users[$targetId])) {
-            $this->users[$targetId]->send($payload);
+        // 5. Рассылаем: в группе — всем участникам, в личке — собеседнику и себе
+        if ($isGroup) {
+            $stmtMem = $this->pdo->prepare("SELECT user_id FROM room_members WHERE room_id = ?");
+            $stmtMem->execute([$roomId]);
+            foreach ($stmtMem->fetchAll(PDO::FETCH_COLUMN) as $memberId) {
+                if (isset($this->users[(int)$memberId])) {
+                    $this->users[(int)$memberId]->send($payload);
+                }
+            }
+        } else {
+            if (isset($this->users[$targetId])) {
+                $this->users[$targetId]->send($payload);
+            }
+            $from->send($payload);
         }
-        $from->send($payload);
 
     } catch (Exception $e) {
-        echo "ИСКЛЮЧЕНИЕ: " . $e->getMessage() . "\n";
+        echo "ИСКЛЮЧЕНИЕ ПРИ ПЕРЕСЫЛКЕ: " . $e->getMessage() . "\n";
     }
     return;
 }
+
 // === УДАЛЕНИЕ СООБЩЕНИЯ ===
 if (($data['type'] ?? '') === 'delete_message') {
     $messageId = (int)($data['message_id'] ?? 0);

@@ -44,7 +44,7 @@ function ForwardModal({ friends = [], onClose, onForward }) {
               return (
                 <div
                   key={item.uniqueKey || `${item.isGroup ? 'group' : 'user'}_${item.id}`}
-                  className="forward-item"
+                  className="forward-item-space"
                   onClick={() => onForward(item.id, item.isGroup)}
                 >
                   {item.isGroup ? (

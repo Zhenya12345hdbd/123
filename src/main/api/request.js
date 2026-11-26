@@ -57,6 +57,12 @@ if (url.includes('delete_account.php')) {
   console.log('[MOCK] Удаление аккаунта');
   return { success: true };
 }
+if (url.includes('/get_room_members.php')) {
+  return [
+    { id: 1, first_name: 'Вы', last_name: '(Создатель)', avatar_path: null },
+    { id: 11, first_name: 'Маша', last_name: 'Машина', avatar_path: null },
+  ];
+}
 if (url.includes('/get_rooms.php')) {
   return [
     {
